@@ -2,12 +2,15 @@
   "name": "timesheet-app",
   "version": "1.0.0",
   "private": true,
-  "description": "Bang cham cong noi bo - gon nhe, khong can database ngoai",
+  "description": "Bang cham cong noi bo - gon nhe, khong can database ngoai hoac dung Supabase",
   "main": "server.js",
   "scripts": {
-    "start": "node server.js"
+    "start": "node server.js",
+    "test": "node test/test_api.js && node test/test_e2e_calc.js"
   },
   "dependencies": {
+    "@supabase/supabase-js": "^2.45.4",
+    "dotenv": "^16.4.5",
     "express": "^4.19.2"
   }
 }
