@@ -1,0 +1,284 @@
+@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap');
+
+:root {
+  --paper: #EAE6D8;
+  --paper-deep: #DFDAC7;
+  --ink: #22303C;
+  --ink-soft: #5B6B76;
+  --line: #CFC6AC;
+  --stamp: #AF4A2E;
+  --onsite: #3F6B4C;
+  --remote: #2E5F82;
+  --off: #8A7343;
+  --card: #F4F1E6;
+  --font-display: 'Space Grotesk', sans-serif;
+  --font-body: 'Inter', sans-serif;
+  --font-mono: 'IBM Plex Mono', monospace;
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  background: var(--paper);
+  color: var(--ink);
+  font-family: var(--font-body);
+}
+
+.wrap {
+  max-width: 780px;
+  margin: 0 auto;
+  padding: 24px 20px 40px;
+}
+
+.topbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  border-bottom: 2px solid var(--ink);
+  padding-bottom: 16px;
+  margin-bottom: 20px;
+}
+.eyebrow {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--stamp);
+  letter-spacing: 0.15em;
+}
+.topbar h1 {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 26px;
+  margin: 2px 0 0;
+}
+.emp-count {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: var(--ink-soft);
+}
+
+.error-box {
+  background: #F3DCD4;
+  color: var(--stamp);
+  padding: 8px 12px;
+  border-radius: 4px;
+  margin-bottom: 16px;
+  font-size: 13px;
+}
+
+.tabs { display: flex; gap: 4px; }
+.tab-btn {
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: 13px;
+  letter-spacing: 0.02em;
+  padding: 10px 16px;
+  background: transparent;
+  color: var(--ink);
+  border: none;
+  border-bottom: 2px solid transparent;
+  border-radius: 6px 6px 0 0;
+  cursor: pointer;
+}
+.tab-btn.active {
+  background: var(--ink);
+  color: var(--paper);
+  border-bottom: 2px solid var(--stamp);
+}
+
+.panel {
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: 0 8px 8px 8px;
+  padding: 20px;
+}
+
+.tab-content { display: none; }
+.tab-content.active { display: block; }
+
+.row-controls {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 16px;
+  flex-wrap: wrap;
+}
+.row-controls input {
+  font-family: var(--font-mono);
+  font-size: 13px;
+  padding: 8px 10px;
+  border: 1px solid var(--line);
+  border-radius: 5px;
+  background: var(--paper);
+}
+.muted { color: var(--ink-soft); }
+.mono { font-family: var(--font-mono); }
+
+.entry-form {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 8px;
+  margin-bottom: 20px;
+  padding: 12px;
+  background: var(--paper);
+  border: 1px dashed var(--line);
+  border-radius: 6px;
+}
+.entry-form select,
+.entry-form input {
+  padding: 8px;
+  border: 1px solid var(--line);
+  border-radius: 5px;
+  background: white;
+  font-size: 13px;
+  font-family: var(--font-body);
+}
+.entry-form input[type="time"] { font-family: var(--font-mono); }
+.note-input { grid-column: 1 / -1; }
+.btn-primary {
+  background: var(--ink);
+  color: var(--paper);
+  border: none;
+  border-radius: 5px;
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: 13px;
+  cursor: pointer;
+  padding: 8px;
+}
+.btn-primary:hover { opacity: 0.9; }
+
+.entry-list { display: flex; flex-direction: column; gap: 8px; }
+.entry-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  background: white;
+  border-radius: 6px;
+  padding: 10px 12px;
+}
+.entry-row .name {
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: 14px;
+  min-width: 100px;
+}
+.entry-row .times {
+  font-family: var(--font-mono);
+  font-size: 13px;
+  color: var(--ink-soft);
+}
+.entry-row .hours {
+  font-family: var(--font-mono);
+  font-size: 13px;
+  font-weight: 600;
+}
+.entry-row .note {
+  font-size: 12px;
+  color: var(--ink-soft);
+  font-style: italic;
+}
+.entry-row .del-btn {
+  margin-left: auto;
+  background: none;
+  border: none;
+  color: var(--stamp);
+  cursor: pointer;
+  font-size: 16px;
+  padding: 4px;
+}
+
+.stamp {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 3px 8px;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  border-radius: 3px;
+  border: 1.5px dashed;
+  transform: rotate(-2deg);
+  white-space: nowrap;
+}
+.stamp.Onsite { color: var(--onsite); border-color: var(--onsite); }
+.stamp.Remote { color: var(--remote); border-color: var(--remote); }
+.stamp.Nghỉ { color: var(--off); border-color: var(--off); }
+
+.emp-form { display: flex; gap: 8px; margin-bottom: 20px; }
+.emp-form input {
+  flex: 1;
+  padding: 8px 12px;
+  border: 1px solid var(--line);
+  border-radius: 5px;
+  font-size: 13px;
+}
+.emp-list { display: flex; flex-direction: column; gap: 8px; }
+.emp-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: white;
+  border-radius: 6px;
+  padding: 10px 12px;
+}
+.emp-row .name { font-family: var(--font-display); font-weight: 600; font-size: 14px; }
+.emp-row .del-btn {
+  background: none;
+  border: none;
+  color: var(--stamp);
+  cursor: pointer;
+  font-size: 16px;
+}
+
+.empty-state {
+  padding: 32px 0;
+  text-align: center;
+  color: var(--ink-soft);
+  font-size: 13px;
+  border: 1px dashed var(--line);
+  border-radius: 6px;
+}
+
+.summary-table { border: 1px solid var(--line); border-radius: 6px; overflow: hidden; }
+.summary-row {
+  display: grid;
+  grid-template-columns: 2fr 1fr 1.3fr 1fr;
+  padding: 10px 12px;
+  align-items: center;
+  font-size: 13px;
+}
+.summary-row.header {
+  background: var(--ink);
+  color: var(--paper);
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: 11px;
+  letter-spacing: 0.04em;
+}
+.summary-row.even { background: white; }
+.summary-row.odd { background: var(--paper); }
+.summary-row.total {
+  background: var(--paper-deep);
+  font-family: var(--font-display);
+  font-weight: 700;
+  border-top: 2px solid var(--ink);
+}
+.summary-row .mono-cell { font-family: var(--font-mono); font-weight: 600; }
+.summary-row .muted-cell { font-family: var(--font-mono); color: var(--ink-soft); }
+
+.footnote {
+  margin-top: 16px;
+  text-align: center;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--ink-soft);
+}
+
+@media (max-width: 640px) {
+  .entry-form { grid-template-columns: repeat(2, 1fr); }
+  .summary-row { grid-template-columns: 1.5fr 1fr 1fr 0.8fr; font-size: 12px; }
+}

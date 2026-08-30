@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Bảng Chấm Công</title>
+<link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <div class="wrap">
+    <header class="topbar">
+      <div>
+        <div class="eyebrow">LEDGER · NỘI BỘ</div>
+        <h1>Bảng Chấm Công</h1>
+      </div>
+      <div class="emp-count" id="empCount">0 nhân viên</div>
+    </header>
+
+    <div id="errorBox" class="error-box" style="display:none;"></div>
+
+    <nav class="tabs">
+      <button class="tab-btn active" data-tab="cham-cong">Chấm công</button>
+      <button class="tab-btn" data-tab="nhan-vien">Nhân viên</button>
+      <button class="tab-btn" data-tab="tong-hop">Tổng hợp</button>
+    </nav>
+
+    <main class="panel">
+      <!-- CHAM CONG -->
+      <section id="tab-cham-cong" class="tab-content active">
+        <div class="row-controls">
+          <input type="date" id="dateInput" />
+          <span id="weekdayLabel" class="mono muted"></span>
+        </div>
+
+        <form id="entryForm" class="entry-form">
+          <select id="empSelect" required>
+            <option value="">Nhân viên</option>
+          </select>
+          <input type="time" id="inTime" />
+          <input type="time" id="outTime" />
+          <select id="modeSelect">
+            <option value="Onsite">Onsite</option>
+            <option value="Remote">Remote</option>
+            <option value="Nghỉ">Nghỉ</option>
+          </select>
+          <button type="submit" class="btn-primary">+ Thêm</button>
+          <input type="text" id="noteInput" placeholder="Ghi chú (không bắt buộc)" class="note-input" />
+        </form>
+
+        <div id="entryList" class="entry-list"></div>
+      </section>
+
+      <!-- NHAN VIEN -->
+      <section id="tab-nhan-vien" class="tab-content">
+        <form id="empForm" class="emp-form">
+          <input type="text" id="newEmpName" placeholder="Tên nhân viên mới" required />
+          <button type="submit" class="btn-primary">+ Thêm</button>
+        </form>
+        <div id="empList" class="emp-list"></div>
+      </section>
+
+      <!-- TONG HOP -->
+      <section id="tab-tong-hop" class="tab-content">
+        <div class="row-controls">
+          <input type="month" id="monthInput" />
+          <span id="monthLabel" class="mono muted"></span>
+        </div>
+        <div id="summaryTable" class="summary-table"></div>
+      </section>
+    </main>
+
+    <footer class="footnote">Dữ liệu lưu trên server nội bộ — mọi người trong team dùng chung một bảng.</footer>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>

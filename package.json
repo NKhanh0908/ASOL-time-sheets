@@ -1,0 +1,13 @@
+{
+  "name": "timesheet-app",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Bang cham cong noi bo - gon nhe, khong can database ngoai",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "express": "^4.19.2"
+  }
+}
