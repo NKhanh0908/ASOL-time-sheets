@@ -55,9 +55,10 @@ app.get("/api/entries", (req, res) => {
 });
 
 app.post("/api/entries", (req, res) => {
-  const { date, employeeId, in: timeIn, out, mode, note } = req.body;
-  if (!date || !employeeId || !mode) {
-    return res.status(400).json({ error: "Thiếu ngày, nhân viên hoặc hình thức" });
+  const { date, employeeId, in: timeIn, out, lunchOut, lunchIn, mode, note } = req.body;
+  const trimmedNote = (note || "").trim();
+  if (!date || !employeeId || !mode || !trimmedNote) {
+    return res.status(400).json({ error: "Thiếu ngày, nhân viên, hình thức hoặc ghi chú" });
   }
   const db = loadDB();
   const entry = {
@@ -66,8 +67,10 @@ app.post("/api/entries", (req, res) => {
     employeeId,
     in: timeIn || "",
     out: out || "",
+    lunchOut: lunchOut || "",
+    lunchIn: lunchIn || "",
     mode,
-    note: note || "",
+    note: trimmedNote,
   };
   db.entries.push(entry);
   saveDB(db);
