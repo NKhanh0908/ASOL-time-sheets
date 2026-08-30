@@ -11,23 +11,27 @@ const dict = {
     tabChamCong: "Chấm công",
     tabNhanVien: "Nhân viên",
     tabTongHop: "Tổng hợp",
-    selectEmployee: "Nhân viên",
+    selectEmployee: "Chọn nhân viên",
     modeOnsite: "Onsite",
     modeRemote: "Remote",
     modeOff: "Nghỉ",
-    labelInTime: "Giờ vào",
-    labelLunchOut: "Nghỉ trưa",
-    labelLunchIn: "Hết nghỉ",
-    labelOutTime: "Giờ ra",
+    labelInTime: "Giờ vào (Sáng)",
+    labelOutTime: "Giờ ra (Chiều)",
     placeholderTask: "Công việc hôm nay làm: ...",
     placeholderReason: "Lý do nghỉ (bắt buộc)...",
     placeholderNewEmp: "Tên nhân viên mới",
     btnRecord: "+ Ghi nhận",
+    btnCheckin: "⚡ Điểm danh Vào",
+    btnCheckout: "🏁 Cập nhật Giờ ra",
+    btnQuickCheckout: "🏁 Check-out",
+    btnCancel: "Huỷ",
     btnAddEmp: "+ Thêm",
     emptyDay: "Chưa có ai chấm công ngày này.",
     emptyEmp: "Chưa có nhân viên nào.",
     emptySummary: "Chưa có nhân viên nào để tổng hợp.",
     loading: "Đang tải...",
+    statusWorking: "Đang làm việc",
+    lunchDeducted: "Đã trừ 1h30 trưa",
     thEmployee: "NHÂN VIÊN",
     thTotalHours: "TỔNG GIỜ",
     thOnsiteRemote: "ONSITE / REMOTE",
@@ -35,7 +39,6 @@ const dict = {
     thTotal: "TỔNG CỘNG",
     empCountLabel: "nhân viên",
     deletedEmp: "(đã xoá)",
-    lunchBreakPrefix: "Nghỉ trưa",
     errMissingFields: "Vui lòng chọn nhân viên và nhập đầy đủ thông tin!",
     errNoteEmpty: "Ghi chú không được để trống!",
     footerNote: "Dữ liệu lưu trên server nội bộ — mọi người trong team dùng chung một bảng.",
@@ -52,19 +55,23 @@ const dict = {
     modeOnsite: "Onsite",
     modeRemote: "Remote",
     modeOff: "Off",
-    labelInTime: "Check-in",
-    labelLunchOut: "Lunch Out",
-    labelLunchIn: "Lunch In",
-    labelOutTime: "Check-out",
+    labelInTime: "Check-in (Morning)",
+    labelOutTime: "Check-out (Evening)",
     placeholderTask: "Today's tasks: ...",
     placeholderReason: "Reason for leave (required)...",
     placeholderNewEmp: "New employee name",
     btnRecord: "+ Record",
+    btnCheckin: "⚡ Check-in",
+    btnCheckout: "🏁 Update Check-out",
+    btnQuickCheckout: "🏁 Check-out",
+    btnCancel: "Cancel",
     btnAddEmp: "+ Add",
     emptyDay: "No entries for this date.",
     emptyEmp: "No employees added yet.",
     emptySummary: "No employees available for summary.",
     loading: "Loading...",
+    statusWorking: "Working",
+    lunchDeducted: "-1.5h lunch",
     thEmployee: "EMPLOYEE",
     thTotalHours: "TOTAL HOURS",
     thOnsiteRemote: "ONSITE / REMOTE",
@@ -72,7 +79,6 @@ const dict = {
     thTotal: "GRAND TOTAL",
     empCountLabel: "employees",
     deletedEmp: "(deleted)",
-    lunchBreakPrefix: "Lunch",
     errMissingFields: "Please select an employee and fill all required fields!",
     errNoteEmpty: "Note cannot be empty!",
     footerNote: "Data saved on internal server — shared across the team.",
@@ -93,13 +99,13 @@ function setLanguage(lang) {
   document.getElementById("langVi").classList.toggle("active", lang === "vi");
   document.getElementById("langEn").classList.toggle("active", lang === "en");
 
-  // Cập nhật các text data-i18n
+  // Update data-i18n
   document.querySelectorAll("[data-i18n]").forEach((el) => {
     const k = el.getAttribute("data-i18n");
     if (k && t(k)) el.textContent = t(k);
   });
 
-  // Cập nhật placeholders
+  // Update placeholders
   document.querySelectorAll("[data-i18n-ph]").forEach((el) => {
     const k = el.getAttribute("data-i18n-ph");
     if (k && t(k)) el.placeholder = t(k);
@@ -111,6 +117,7 @@ function setLanguage(lang) {
   renderEmployeeList();
   renderSummary();
   updateEmpCount();
+  onEmployeeOrDateChange();
 }
 
 // ---------- Helpers ----------
@@ -129,26 +136,23 @@ function timeToMinutes(tStr) {
   return h * 60 + m;
 }
 
-function hoursBetween(inStr, outStr, lunchOutStr, lunchInStr, mode) {
+function hoursBetween(inStr, outStr, mode) {
   if (mode === "Nghỉ" || mode === "Off") return 0;
   const inMin = timeToMinutes(inStr);
   const outMin = timeToMinutes(outStr);
   if (inMin === null || outMin === null || outMin <= inMin) return 0;
 
-  let totalWorkMinutes = outMin - inMin;
+  const rawMinutes = outMin - inMin;
+  const rawHours = rawMinutes / 60;
 
-  const lOutMin = timeToMinutes(lunchOutStr);
-  const lInMin = timeToMinutes(lunchInStr);
-
-  if (lOutMin !== null && lInMin !== null && lInMin > lOutMin) {
-    const actualLunchStart = Math.max(inMin, lOutMin);
-    const actualLunchEnd = Math.min(outMin, lInMin);
-    if (actualLunchEnd > actualLunchStart) {
-      totalWorkMinutes -= (actualLunchEnd - actualLunchStart);
-    }
+  // Nếu làm trên 5 tiếng: Tự động trừ 1h30 (90 phút) nghỉ trưa
+  if (rawHours > 5) {
+    const workedMin = rawMinutes - 90;
+    return workedMin > 0 ? workedMin / 60 : 0;
   }
 
-  return totalWorkMinutes > 0 ? totalWorkMinutes / 60 : 0;
+  // Làm nửa buổi (<= 5 tiếng): Không trừ
+  return rawHours;
 }
 
 function fmtHours(h) {
@@ -211,6 +215,59 @@ document.querySelectorAll(".btn-now").forEach((btn) => {
       input.value = `${hh}:${mm}`;
     }
   });
+});
+
+// ---------- Smart Form Detection (Check-in vs Check-out) ----------
+function onEmployeeOrDateChange() {
+  const empId = empSelect.value;
+  const date = dateInput.value;
+  const entryIdInput = document.getElementById("entryIdInput");
+  const btnSubmit = document.getElementById("btnSubmitEntry");
+  const btnReset = document.getElementById("btnResetForm");
+
+  if (!empId || !date) {
+    resetFormState();
+    return;
+  }
+
+  const mk = monthKeyOf(date);
+  const monthEntries = state.entriesCache[mk] || [];
+  const existingEntry = monthEntries.find((e) => e.date === date && e.employeeId === empId);
+
+  if (existingEntry && existingEntry.in && !existingEntry.out && existingEntry.mode !== "Nghỉ") {
+    // Đã check-in sáng, đang chờ check-out chiều
+    entryIdInput.value = existingEntry.id;
+    document.getElementById("inTime").value = existingEntry.in;
+    document.getElementById("inTime").disabled = true;
+
+    // Tự động điền giờ hiện tại vào outTime nếu chưa có
+    const now = new Date();
+    const hh = String(now.getHours()).padStart(2, "0");
+    const mm = String(now.getMinutes()).padStart(2, "0");
+    document.getElementById("outTime").value = `${hh}:${mm}`;
+
+    document.getElementById("modeSelect").value = existingEntry.mode || "Onsite";
+    document.getElementById("noteInput").value = existingEntry.note || "";
+    btnSubmit.textContent = t("btnCheckout");
+    btnReset.style.display = "inline-block";
+  } else {
+    resetFormState();
+  }
+}
+
+function resetFormState() {
+  document.getElementById("entryIdInput").value = "";
+  document.getElementById("inTime").disabled = false;
+  document.getElementById("btnSubmitEntry").textContent = t("btnRecord");
+  document.getElementById("btnResetForm").style.display = "none";
+}
+
+document.getElementById("empSelect").addEventListener("change", onEmployeeOrDateChange);
+document.getElementById("btnResetForm").addEventListener("click", () => {
+  resetFormState();
+  document.getElementById("inTime").value = "";
+  document.getElementById("outTime").value = "";
+  document.getElementById("noteInput").value = "";
 });
 
 // ---------- API ----------
@@ -286,26 +343,43 @@ async function renderDayEntries() {
     }
     list.innerHTML = "";
     dayEntries.forEach((e) => {
-      const h = hoursBetween(e.in, e.out, e.lunchOut, e.lunchIn, e.mode);
+      const hasBoth = e.in && e.out;
+      const isWorking = e.in && !e.out && e.mode !== "Nghỉ";
+      const h = hasBoth ? hoursBetween(e.in, e.out, e.mode) : 0;
+      const isFullDay = hasBoth && ((timeToMinutes(e.out) - timeToMinutes(e.in)) / 60 > 5);
+
       const row = document.createElement("div");
       row.className = "entry-row";
       row.style.borderLeft = `3px solid var(--${e.mode === "Onsite" ? "onsite" : e.mode === "Remote" ? "remote" : "off"})`;
-      
-      let lunchInfo = "";
-      if (e.lunchOut && e.lunchIn) {
-        lunchInfo = `<span class="lunch-badge">${t("lunchBreakPrefix")}: ${e.lunchOut} → ${e.lunchIn}</span>`;
+
+      let statusBadge = "";
+      if (isWorking) {
+        statusBadge = `
+          <span class="badge-working">${t("statusWorking")}</span>
+          <button class="btn-checkout-quick" data-id="${e.id}">${t("btnQuickCheckout")}</button>
+        `;
+      } else if (hasBoth) {
+        statusBadge = `<span class="hours">${fmtHours(h)}</span> ${isFullDay ? `<span class="badge-lunch">${t("lunchDeducted")}</span>` : ""}`;
+      } else {
+        statusBadge = `<span class="muted mono">--:--</span>`;
       }
 
       const modeText = e.mode === "Nghỉ" ? t("modeOff") : e.mode;
 
       row.innerHTML = `
         <span class="name">${empName(e.employeeId)}</span>
-        <span class="times">${e.in || "--:--"} → ${e.out || "--:--"}${lunchInfo}</span>
-        <span class="hours">${fmtHours(h)}</span>
+        <span class="times">${e.in || "--:--"} → ${e.out || "--:--"}</span>
+        ${statusBadge}
         <span class="stamp ${e.mode}">${modeText}</span>
         <span class="note">${e.note || ""}</span>
         <button class="del-btn" data-id="${e.id}" aria-label="Xoá">🗑</button>
       `;
+
+      const btnQuick = row.querySelector(".btn-checkout-quick");
+      if (btnQuick) {
+        btnQuick.addEventListener("click", () => quickCheckout(e));
+      }
+
       row.querySelector(".del-btn").addEventListener("click", () => deleteEntry(e.id, mk));
       list.appendChild(row);
     });
@@ -315,12 +389,40 @@ async function renderDayEntries() {
   }
 }
 
-dateInput.addEventListener("change", renderDayEntries);
+async function quickCheckout(entry) {
+  const now = new Date();
+  const hh = String(now.getHours()).padStart(2, "0");
+  const mm = String(now.getMinutes()).padStart(2, "0");
+  const outTime = `${hh}:${mm}`;
+
+  try {
+    const mk = monthKeyOf(entry.date);
+    const updated = await api(`/api/entries/${entry.id}`, {
+      method: "PUT",
+      body: JSON.stringify({ out: outTime }),
+    });
+    state.entriesCache[mk] = (state.entriesCache[mk] || []).map((e) =>
+      e.id === entry.id ? updated : e
+    );
+    renderDayEntries();
+    if (document.getElementById("monthInput").value === mk) renderSummary();
+    onEmployeeOrDateChange();
+  } catch (err) {
+    showError(err.message);
+  }
+}
+
+dateInput.addEventListener("change", () => {
+  renderDayEntries();
+  onEmployeeOrDateChange();
+});
 
 entryForm.addEventListener("submit", async (ev) => {
   ev.preventDefault();
   const employeeId = empSelect.value;
   const note = document.getElementById("noteInput").value.trim();
+  const entryId = document.getElementById("entryIdInput").value;
+
   if (!employeeId) return showError(t("errMissingFields"));
   if (!note) return showError(t("errNoteEmpty"));
 
@@ -328,20 +430,31 @@ entryForm.addEventListener("submit", async (ev) => {
     date: dateInput.value,
     employeeId,
     in: document.getElementById("inTime").value,
-    lunchOut: document.getElementById("lunchOutTime").value,
-    lunchIn: document.getElementById("lunchInTime").value,
     out: document.getElementById("outTime").value,
     mode: document.getElementById("modeSelect").value,
     note,
   };
 
   try {
-    const entry = await api("/api/entries", { method: "POST", body: JSON.stringify(payload) });
-    const mk = monthKeyOf(entry.date);
-    state.entriesCache[mk] = [...(state.entriesCache[mk] || []), entry];
+    const mk = monthKeyOf(payload.date);
+    if (entryId) {
+      const updated = await api(`/api/entries/${entryId}`, {
+        method: "PUT",
+        body: JSON.stringify(payload),
+      });
+      state.entriesCache[mk] = (state.entriesCache[mk] || []).map((e) =>
+        e.id === entryId ? updated : e
+      );
+    } else {
+      const created = await api("/api/entries", {
+        method: "POST",
+        body: JSON.stringify(payload),
+      });
+      state.entriesCache[mk] = [...(state.entriesCache[mk] || []), created];
+    }
+
+    resetFormState();
     document.getElementById("inTime").value = "";
-    document.getElementById("lunchOutTime").value = "";
-    document.getElementById("lunchInTime").value = "";
     document.getElementById("outTime").value = "";
     document.getElementById("noteInput").value = "";
     renderDayEntries();
@@ -357,6 +470,7 @@ async function deleteEntry(id, mk) {
     state.entriesCache[mk] = (state.entriesCache[mk] || []).filter((e) => e.id !== id);
     renderDayEntries();
     if (document.getElementById("monthInput").value === mk) renderSummary();
+    onEmployeeOrDateChange();
   } catch (err) {
     showError(err.message);
   }
@@ -426,7 +540,7 @@ async function renderSummary() {
     let grand = 0;
     const rows = state.employees.map((emp) => {
       const empEntries = entries.filter((e) => e.employeeId === emp.id);
-      const total = empEntries.reduce((s, e) => s + hoursBetween(e.in, e.out, e.lunchOut, e.lunchIn, e.mode), 0);
+      const total = empEntries.reduce((s, e) => s + (e.in && e.out ? hoursBetween(e.in, e.out, e.mode) : 0), 0);
       const onsite = empEntries.filter((e) => e.mode === "Onsite").length;
       const remote = empEntries.filter((e) => e.mode === "Remote").length;
       const off = empEntries.filter((e) => e.mode === "Nghỉ").length;
