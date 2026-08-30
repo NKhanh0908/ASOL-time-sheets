@@ -1,25 +1,15 @@
-# Bảng Chấm Công Nội Bộ
+# Bảng Chấm Công Nội Bộ (Timesheet App)
 
-Web app gọn nhẹ để cả team chấm công hằng ngày (giờ vào/ra, onsite/remote/nghỉ) và
-tự động tổng hợp giờ làm cuối tháng.
+Web app gọn nhẹ để cả team chấm công hằng ngày (sáng vào / chiều ra, onsite/remote/nghỉ), tự động trừ 1h30 nghỉ trưa thông minh và tự động tổng hợp giờ làm cuối tháng.
 
-- Backend: Node.js + Express (không cần cài database ngoài)
-- Dữ liệu lưu trong file `data/db.json` trên server
-- Frontend: HTML/CSS/JS thuần, không cần build
+- **Backend:** Node.js + Express (Hỗ trợ **Supabase PostgreSQL** trên Cloud hoặc **File JSON** khi chạy Local).
+- **Frontend:** HTML5, CSS3, Vanilla JS thuần (hỗ trợ Song ngữ **Tiếng Việt & Tiếng Anh**).
+- **Hosting:** Tương thích 100% với **Vercel Serverless**, Docker, PM2 hoặc chạy trực tiếp.
+- **CI/CD:** Tích hợp **GitHub Actions Workflow** tự động kiểm thử code khi push.
 
-## 1. Chạy thử trên máy cá nhân
+---
 
-```bash
-cd timesheet-app
-npm install
-npm start
-```
-
-Mở trình duyệt: http://localhost:3000
-
-## 2. Deploy lên server nội bộ (cách đơn giản nhất)
-
-Copy cả thư mục `timesheet-app` lên server (VD: qua `scp` hoặc git), rồi:
+## 1. Chạy thử trên máy cá nhân (Local)
 
 ```bash
 cd timesheet-app
@@ -27,53 +17,50 @@ npm install
 npm start
 ```
 
-Mặc định chạy ở cổng 3000. Đổi cổng bằng biến môi trường:
+Mở trình duyệt: `http://localhost:3000` (Mặc định dữ liệu sẽ tự lưu vào file `data/db.json` mà không cần cấu hình thêm).
 
-```bash
-PORT=8080 npm start
-```
+---
 
-Để app luôn chạy nền (tự khởi động lại nếu crash), dùng **pm2**:
+## 2. Deploy lên Vercel + Supabase (Miễn phí, 24/7 không bao giờ ngủ)
 
-```bash
-npm install -g pm2
-pm2 start server.js --name timesheet
-pm2 save
-pm2 startup   # để tự chạy lại khi server reboot
-```
+### Bước 1: Tạo Database trên Supabase (2 phút)
+1. Đăng ký tài khoản miễn phí tại [supabase.com](https://supabase.com/).
+2. Tạo một Project mới.
+3. Vào mục **SQL Editor** ở thanh menu bên trái $\rightarrow$ Mở file [schema.sql](schema.sql) trong repo, copy toàn bộ nội dung dán vào và bấm **Run**.
+4. Vào **Project Settings** $\rightarrow$ **API** $\rightarrow$ Copy 2 giá trị:
+   - `Project URL`
+   - `anon public key` (hoặc `service_role secret key`)
 
-Sau đó ai trong công ty cũng vào được qua: `http://<ip-server-noi-bo>:3000`
+### Bước 2: Deploy lên Vercel (1 phút)
+1. Đẩy code lên GitHub repository của bạn.
+2. Truy cập [vercel.com](https://vercel.com/) $\rightarrow$ Chọn **Add New Project** $\rightarrow$ Chọn repo vừa đẩy.
+3. Trong phần **Environment Variables**, thêm 2 biến môi trường:
+   - `SUPABASE_URL`: (Giá trị Project URL từ Supabase)
+   - `SUPABASE_KEY`: (Giá trị anon/secret key từ Supabase)
+4. Bấm **Deploy**. Sau ~20 giây, bạn sẽ có đường link HTTPS miễn phí (ví dụ: `https://timesheet-team.vercel.app`) để toàn bộ nhân viên truy cập.
 
-## 3. Deploy bằng Docker (nếu server có Docker)
+---
+
+## 3. Quản lý & Xuất dữ liệu báo cáo trên Supabase
+
+- Mở Supabase Dashboard $\rightarrow$ **Table Editor** $\rightarrow$ Chọn bảng `entries`.
+- Bạn có thể xem toàn bộ lịch sử chấm công, tìm kiếm theo ngày, sửa trực tiếp hoặc bấm **"Export to CSV"** để tải file Excel về tính lương cuối tháng.
+
+---
+
+## 4. Deploy bằng Docker (nếu dùng Server riêng)
 
 ```bash
 docker build -t timesheet-app .
 docker run -d -p 3000:3000 -v $(pwd)/data:/app/data --name timesheet timesheet-app
 ```
 
-Cờ `-v $(pwd)/data:/app/data` giúp dữ liệu không bị mất khi container restart.
+---
 
-## 4. Cho cả team truy cập dễ hơn
+## 5. Chạy Kiểm Thử Tự Động (Tests)
 
-- Nếu server nội bộ có domain/DNS riêng, có thể dùng **nginx** làm reverse proxy để
-  truy cập qua `timesheet.congty.local` thay vì gõ IP:port.
-- App hiện **không có đăng nhập/phân quyền** — ai vào được địa chỉ đó cũng chấm công
-  và xem được hết. Nếu công ty cần giới hạn truy cập, có thể thêm xác thực đơn giản
-  (Basic Auth qua nginx, hoặc VPN nội bộ) — nói mình biết nếu cần, mình sẽ bổ sung.
-
-## Cấu trúc thư mục
-
-```
-timesheet-app/
-├── server.js          # Backend Express + API
-├── package.json
-├── data/db.json        # Dữ liệu (tự tạo khi chạy lần đầu)
-└── public/
-    ├── index.html
-    ├── styles.css
-    └── app.js
+```bash
+npm test
 ```
 
-## Sao lưu dữ liệu
-
-Toàn bộ dữ liệu nằm trong 1 file: `data/db.json`. Backup định kỳ file này là đủ.
+Mỗi khi bạn `git push` lên GitHub, **GitHub Actions Workflow** sẽ tự động chạy toàn bộ các bài kiểm thử để đảm bảo hệ thống luôn ổn định.
