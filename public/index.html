@@ -40,6 +40,7 @@
         </div>
 
         <form id="entryForm" class="entry-form">
+          <input type="hidden" id="entryIdInput" value="" />
           <div class="form-row main-fields">
             <select id="empSelect" required>
               <option value="" data-i18n="selectEmployee">Nhân viên</option>
@@ -51,9 +52,9 @@
             </select>
           </div>
 
-          <div class="time-grid" id="timeGrid">
+          <div class="time-grid-simple" id="timeGrid">
             <div class="time-field">
-              <label for="inTime" data-i18n="labelInTime">Giờ vào</label>
+              <label for="inTime" data-i18n="labelInTime">Giờ vào (Sáng)</label>
               <div class="time-input-wrap">
                 <input type="time" id="inTime" />
                 <button type="button" class="btn-now" data-target="inTime" title="Điền giờ hiện tại">⚡</button>
@@ -61,23 +62,7 @@
             </div>
 
             <div class="time-field">
-              <label for="lunchOutTime" data-i18n="labelLunchOut">Nghỉ trưa</label>
-              <div class="time-input-wrap">
-                <input type="time" id="lunchOutTime" />
-                <button type="button" class="btn-now" data-target="lunchOutTime" title="Điền giờ hiện tại">⚡</button>
-              </div>
-            </div>
-
-            <div class="time-field">
-              <label for="lunchInTime" data-i18n="labelLunchIn">Hết nghỉ</label>
-              <div class="time-input-wrap">
-                <input type="time" id="lunchInTime" />
-                <button type="button" class="btn-now" data-target="lunchInTime" title="Điền giờ hiện tại">⚡</button>
-              </div>
-            </div>
-
-            <div class="time-field">
-              <label for="outTime" data-i18n="labelOutTime">Giờ ra</label>
+              <label for="outTime" data-i18n="labelOutTime">Giờ ra (Chiều)</label>
               <div class="time-input-wrap">
                 <input type="time" id="outTime" />
                 <button type="button" class="btn-now" data-target="outTime" title="Điền giờ hiện tại">⚡</button>
@@ -93,7 +78,10 @@
               placeholder="Công việc hôm nay làm: ..."
               required
             />
-            <button type="submit" class="btn-primary" data-i18n="btnRecord">+ Ghi nhận</button>
+            <div class="btn-actions">
+              <button type="button" id="btnResetForm" class="btn-sub" style="display:none;" data-i18n="btnCancel">Huỷ</button>
+              <button type="submit" id="btnSubmitEntry" class="btn-primary" data-i18n="btnRecord">+ Ghi nhận</button>
+            </div>
           </div>
         </form>
 
