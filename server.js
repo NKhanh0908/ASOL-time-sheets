@@ -55,7 +55,7 @@ app.get("/api/entries", (req, res) => {
 });
 
 app.post("/api/entries", (req, res) => {
-  const { date, employeeId, in: timeIn, out, lunchOut, lunchIn, mode, note } = req.body;
+  const { date, employeeId, in: timeIn, out, mode, note } = req.body;
   const trimmedNote = (note || "").trim();
   if (!date || !employeeId || !mode || !trimmedNote) {
     return res.status(400).json({ error: "Thiếu ngày, nhân viên, hình thức hoặc ghi chú" });
@@ -67,14 +67,30 @@ app.post("/api/entries", (req, res) => {
     employeeId,
     in: timeIn || "",
     out: out || "",
-    lunchOut: lunchOut || "",
-    lunchIn: lunchIn || "",
     mode,
     note: trimmedNote,
   };
   db.entries.push(entry);
   saveDB(db);
   res.json(entry);
+});
+
+app.put("/api/entries/:id", (req, res) => {
+  const { in: timeIn, out, mode, note } = req.body;
+  const db = loadDB();
+  const idx = db.entries.findIndex((e) => e.id === req.params.id);
+  if (idx === -1) {
+    return res.status(404).json({ error: "Không tìm thấy bản ghi" });
+  }
+  if (timeIn !== undefined) db.entries[idx].in = timeIn;
+  if (out !== undefined) db.entries[idx].out = out;
+  if (mode !== undefined) db.entries[idx].mode = mode;
+  if (note !== undefined) {
+    const trimmedNote = (note || "").trim();
+    if (trimmedNote) db.entries[idx].note = trimmedNote;
+  }
+  saveDB(db);
+  res.json(db.entries[idx]);
 });
 
 app.delete("/api/entries/:id", (req, res) => {
