@@ -183,10 +183,10 @@ body {
 }
 
 /* Time Grid Layout */
-.time-grid {
+.time-grid-simple {
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 8px;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
 }
 .time-field {
   display: flex;
@@ -237,6 +237,11 @@ body {
 }
 .full-width { flex: 1; }
 
+.btn-actions {
+  display: flex;
+  gap: 6px;
+}
+
 .btn-primary {
   background: var(--ink);
   color: var(--paper);
@@ -250,6 +255,19 @@ body {
   white-space: nowrap;
 }
 .btn-primary:hover { opacity: 0.9; }
+
+.btn-sub {
+  background: var(--paper-deep);
+  color: var(--ink);
+  border: 1px solid var(--line);
+  border-radius: 5px;
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: 13px;
+  cursor: pointer;
+  padding: 8px 12px;
+}
+.btn-sub:hover { background: var(--line); }
 
 /* Entry List */
 .entry-list { display: flex; flex-direction: column; gap: 8px; }
@@ -273,16 +291,40 @@ body {
   font-size: 13px;
   color: var(--ink-soft);
 }
-.lunch-badge {
+.badge-working {
   font-family: var(--font-mono);
   font-size: 11px;
-  color: var(--ink-soft);
-  background: var(--paper);
-  border: 1px solid var(--line);
+  color: #c2410c;
+  background: #ffedd5;
+  border: 1px solid #fed7aa;
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-weight: 600;
+}
+.badge-lunch {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--onsite);
+  background: #dcfce7;
+  border: 1px solid #bbf7d0;
   padding: 1px 5px;
   border-radius: 3px;
   margin-left: 4px;
 }
+.btn-checkout-quick {
+  background: var(--onsite);
+  color: white;
+  border: none;
+  border-radius: 4px;
+  font-family: var(--font-display);
+  font-size: 11px;
+  font-weight: 600;
+  padding: 4px 8px;
+  cursor: pointer;
+  transition: opacity 0.15s;
+}
+.btn-checkout-quick:hover { opacity: 0.85; }
+
 .entry-row .hours {
   font-family: var(--font-mono);
   font-size: 13px;
@@ -393,7 +435,7 @@ body {
 }
 
 @media (max-width: 640px) {
-  .time-grid { grid-template-columns: repeat(2, 1fr); }
+  .time-grid-simple { grid-template-columns: 1fr; }
   .form-row.main-fields { grid-template-columns: 1fr; }
   .form-row.note-row { flex-direction: column; }
   .summary-row { grid-template-columns: 1.5fr 1fr 1fr 0.8fr; font-size: 12px; }
