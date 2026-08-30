@@ -22,13 +22,22 @@ create table if not exists public.entries (
   created_at timestamp with time zone default timezone('utc'::text, now()) not null
 );
 
--- 3. Tạo index để truy vấn theo tháng nhanh chóng
+-- 3. Bảng Cấu hình hệ thống (system_settings)
+create table if not exists public.system_settings (
+  key text primary key,
+  value jsonb not null,
+  updated_at timestamp with time zone default timezone('utc'::text, now()) not null
+);
+
+-- 4. Tạo index để truy vấn theo ngày, nhân viên và cấu hình
 create index if not exists idx_entries_date on public.entries(date);
 create index if not exists idx_entries_employee_id on public.entries(employee_id);
 
--- 4. Bật Row Level Security (RLS) và cho phép đọc/ghi công khai cho ứng dụng nội bộ
+-- 5. Bật Row Level Security (RLS) và cho phép đọc/ghi công khai cho ứng dụng nội bộ
 alter table public.employees enable row level security;
 alter table public.entries enable row level security;
+alter table public.system_settings enable row level security;
 
 create policy "Allow all access to employees" on public.employees for all using (true) with check (true);
 create policy "Allow all access to entries" on public.entries for all using (true) with check (true);
+create policy "Allow all access to system_settings" on public.system_settings for all using (true) with check (true);

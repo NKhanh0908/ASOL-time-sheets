@@ -23,6 +23,17 @@
           <span class="lang-divider">|</span>
           <button type="button" id="langEn" class="lang-btn">EN</button>
         </div>
+        
+        <!-- Admin Controls on Header -->
+        <div id="guestControls" class="guest-controls">
+          <button type="button" id="btnOpenLoginModal" class="btn-sub btn-sm">🔐 <span data-i18n="adminLogin">Admin</span></button>
+        </div>
+        <div id="adminControls" class="admin-controls" style="display:none;">
+          <span class="badge-admin">👑 Admin</span>
+          <button type="button" id="btnOpenChangePassModal" class="btn-sub btn-sm" data-i18n="btnChangePass">Đổi MK</button>
+          <button type="button" id="btnLogoutAdmin" class="btn-sub btn-sm" data-i18n="btnLogout">Đăng xuất</button>
+        </div>
+
         <div class="emp-count" id="empCount">0 nhân viên</div>
       </div>
     </header>
@@ -31,12 +42,13 @@
 
     <nav class="tabs">
       <button class="tab-btn active" data-tab="cham-cong" data-i18n="tabChamCong">Chấm công</button>
-      <button class="tab-btn" data-tab="nhan-vien" data-i18n="tabNhanVien">Nhân viên</button>
+      <button class="tab-btn" data-tab="loc-cham-cong" data-i18n="tabLocChamCong">Lọc chấm công</button>
+      <button class="tab-btn admin-only" data-tab="nhan-vien" data-i18n="tabNhanVien">Nhân viên</button>
       <button class="tab-btn" data-tab="tong-hop" data-i18n="tabTongHop">Tổng hợp</button>
     </nav>
 
     <main class="panel">
-      <!-- CHAM CONG -->
+      <!-- 1. TAB CHAM CONG -->
       <section id="tab-cham-cong" class="tab-content active">
         <div class="row-controls">
           <input type="date" id="dateInput" />
@@ -90,18 +102,73 @@
         </form>
 
         <div id="entryList" class="entry-list"></div>
+        <div id="timesheetPagination" class="pagination-container"></div>
       </section>
 
-      <!-- NHAN VIEN -->
-      <section id="tab-nhan-vien" class="tab-content">
+      <!-- 2. TAB LOC CHAM CONG -->
+      <section id="tab-loc-cham-cong" class="tab-content">
+        <form id="filterForm" class="filter-form">
+          <div class="filter-grid">
+            <div class="filter-field">
+              <label for="filterEmpSelect" data-i18n="filterLabelEmp">Nhân viên</label>
+              <select id="filterEmpSelect">
+                <option value="" data-i18n="filterAllEmployees">-- Tất cả nhân viên --</option>
+              </select>
+            </div>
+            <div class="filter-field">
+              <label for="filterStartDate" data-i18n="filterLabelFromDate">Từ ngày</label>
+              <input type="date" id="filterStartDate" />
+            </div>
+            <div class="filter-field">
+              <label for="filterEndDate" data-i18n="filterLabelToDate">Đến ngày</label>
+              <input type="date" id="filterEndDate" />
+            </div>
+            <div class="filter-field">
+              <label for="filterModeSelect" data-i18n="filterLabelMode">Hình thức</label>
+              <select id="filterModeSelect">
+                <option value="" data-i18n="filterAllModes">-- Tất cả hình thức --</option>
+                <option value="Onsite">Onsite</option>
+                <option value="Remote">Remote</option>
+                <option value="Nghỉ" data-i18n="modeOff">Nghỉ</option>
+              </select>
+            </div>
+          </div>
+          <div class="filter-actions">
+            <button type="button" id="btnResetFilter" class="btn-sub" data-i18n="btnResetFilter">🔄 Đặt lại</button>
+            <button type="submit" id="btnApplyFilter" class="btn-primary" data-i18n="btnApplyFilter">🔍 Lọc dữ liệu</button>
+          </div>
+        </form>
+
+        <!-- KPI Summary Cards -->
+        <div id="filterKpis" class="kpi-grid" style="display:none;">
+          <div class="kpi-card">
+            <div class="kpi-label" data-i18n="kpiTotalDays">Tổng số công</div>
+            <div class="kpi-val mono" id="kpiTotalDaysVal">0</div>
+          </div>
+          <div class="kpi-card highlight">
+            <div class="kpi-label" data-i18n="kpiTotalHours">Tổng giờ làm</div>
+            <div class="kpi-val mono" id="kpiTotalHoursVal">0,00h</div>
+          </div>
+          <div class="kpi-card">
+            <div class="kpi-label" data-i18n="kpiBreakdown">Phân loại</div>
+            <div class="kpi-sub mono" id="kpiBreakdownVal">0 Onsite / 0 Remote / 0 Nghỉ</div>
+          </div>
+        </div>
+
+        <div id="filterEntryList" class="entry-list"></div>
+        <div id="filterPagination" class="pagination-container"></div>
+      </section>
+
+      <!-- 3. TAB NHAN VIEN (Admin Only) -->
+      <section id="tab-nhan-vien" class="tab-content admin-only">
         <form id="empForm" class="emp-form">
           <input type="text" id="newEmpName" placeholder="Tên nhân viên mới" required data-i18n-ph="placeholderNewEmp" />
-          <button type="submit" class="btn-primary" data-i18n="btnAddEmp">+ Thêm</button>
+          <button type="submit" id="btnAddEmpSubmit" class="btn-primary" data-i18n="btnAddEmp">+ Thêm</button>
         </form>
         <div id="empList" class="emp-list"></div>
       </section>
 
-      <!-- TONG HOP -->
+      <!-- 4. TAB TONG HOP -->
       <section id="tab-tong-hop" class="tab-content">
         <div class="row-controls">
           <input type="month" id="monthInput" />
@@ -113,6 +180,62 @@
 
     <footer class="footnote" data-i18n="footerNote">Dữ liệu lưu trên server nội bộ — mọi người trong team dùng chung một bảng.</footer>
   </div>
+
+  <!-- MODALS -->
+  <!-- 1. Admin Login Modal -->
+  <div id="modalAdminLogin" class="modal-backdrop" style="display:none;">
+    <div class="modal-box">
+      <div class="modal-header">
+        <h3 data-i18n="modalLoginTitle">🔐 Đăng nhập Quản trị viên (Admin)</h3>
+        <button type="button" class="modal-close" id="btnCloseLoginModal">&times;</button>
+      </div>
+      <form id="formAdminLogin">
+        <div class="modal-body">
+          <div class="modal-field">
+            <label for="adminLoginPassword" data-i18n="labelAdminPass">Mật khẩu Admin:</label>
+            <input type="password" id="adminLoginPassword" placeholder="Nhập mật khẩu..." required />
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn-sub" id="btnCancelLoginModal" data-i18n="btnCancel">Huỷ</button>
+          <button type="submit" id="btnSubmitAdminLogin" class="btn-primary" data-i18n="btnSubmitLogin">Đăng nhập</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- 2. Admin Change Password Modal -->
+  <div id="modalAdminChangePass" class="modal-backdrop" style="display:none;">
+    <div class="modal-box">
+      <div class="modal-header">
+        <h3 data-i18n="modalChangePassTitle">🔑 Đổi mật khẩu Admin</h3>
+        <button type="button" class="modal-close" id="btnCloseChangePassModal">&times;</button>
+      </div>
+      <form id="formAdminChangePass">
+        <div class="modal-body">
+          <div class="modal-field">
+            <label for="currentPassInput" data-i18n="labelCurrentPass">Mật khẩu hiện tại:</label>
+            <input type="password" id="currentPassInput" placeholder="Mật khẩu hiện tại..." required />
+          </div>
+          <div class="modal-field">
+            <label for="newPassInput" data-i18n="labelNewPass">Mật khẩu mới (tối thiểu 6 ký tự):</label>
+            <input type="password" id="newPassInput" placeholder="Mật khẩu mới..." minlength="6" required />
+          </div>
+          <div class="modal-field">
+            <label for="confirmPassInput" data-i18n="labelConfirmPass">Xác nhận mật khẩu mới:</label>
+            <input type="password" id="confirmPassInput" placeholder="Nhập lại mật khẩu mới..." minlength="6" required />
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn-sub" id="btnCancelChangePassModal" data-i18n="btnCancel">Huỷ</button>
+          <button type="submit" id="btnSubmitChangePass" class="btn-primary" data-i18n="btnSubmitSave">Lưu mật khẩu</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Toast Notification Container -->
+  <div id="toastContainer" class="toast-container"></div>
 
   <script src="app.js"></script>
 </body>

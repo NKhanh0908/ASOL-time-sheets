@@ -56,4 +56,25 @@ assert.strictEqual(c6, 0, `Expected 0h for Off mode, got ${c6}`);
 const c7 = hoursBetween("08:30", "18:00", "Off");
 assert.strictEqual(c7, 0, `Expected 0h for Off mode, got ${c7}`);
 
-console.log("All calculation tests passed successfully!");
+// Case 8: Pagination calculations
+console.log("Testing Pagination slice & KPI calculations...");
+const sampleList = Array.from({ length: 25 }, (_, i) => ({ id: `${i + 1}`, val: i + 1 }));
+
+const paginate = (items, page = 1, pageSize = 10) => {
+  const totalPages = Math.ceil(items.length / pageSize) || 1;
+  const curPage = Math.max(1, Math.min(page, totalPages));
+  const startIdx = (curPage - 1) * pageSize;
+  const pageItems = items.slice(startIdx, startIdx + pageSize);
+  return { curPage, totalPages, totalItems: items.length, pageItems };
+};
+
+const p1 = paginate(sampleList, 1, 10);
+assert.strictEqual(p1.pageItems.length, 10);
+assert.strictEqual(p1.totalPages, 3);
+assert.strictEqual(p1.pageItems[0].id, "1");
+
+const p3 = paginate(sampleList, 3, 10);
+assert.strictEqual(p3.pageItems.length, 5);
+assert.strictEqual(p3.pageItems[4].id, "25");
+
+console.log("All calculation and pagination tests passed successfully!");

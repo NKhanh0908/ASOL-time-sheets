@@ -8,6 +8,7 @@ const { createClient } = require("@supabase/supabase-js");
 const app = express();
 const PORT = process.env.PORT || 3000;
 const DATA_FILE = path.join(__dirname, "data", "db.json");
+const JWT_SECRET = process.env.ADMIN_JWT_SECRET || "asol-timesheet-admin-secret-2026";
 
 // Khởi tạo Supabase client nếu có biến môi trường
 const SUPABASE_URL = process.env.SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL;
@@ -22,12 +23,69 @@ if (isSupabase) {
   console.log("📁 Kết nối Database: Local file (data/db.json)");
 }
 
+// ---------- Password Hashing & Token Helpers ----------
+function hashPassword(password, existingSalt = null) {
+  const salt = existingSalt || crypto.randomBytes(16).toString("hex");
+  const hash = crypto.scryptSync(password, salt, 64).toString("hex");
+  return { hash, salt };
+}
+
+function verifyPassword(password, storedHash, salt) {
+  try {
+    if (!password || !storedHash || !salt) return false;
+    const calcHash = crypto.scryptSync(password, salt, 64).toString("hex");
+    return crypto.timingSafeEqual(Buffer.from(calcHash, "hex"), Buffer.from(storedHash, "hex"));
+  } catch {
+    return false;
+  }
+}
+
+function generateAdminToken() {
+  const payload = {
+    role: "admin",
+    exp: Date.now() + 7 * 24 * 60 * 60 * 1000, // 7 ngày
+  };
+  const payloadB64 = Buffer.from(JSON.stringify(payload)).toString("base64");
+  const sig = crypto.createHmac("sha256", JWT_SECRET).update(payloadB64).digest("hex");
+  return `${payloadB64}.${sig}`;
+}
+
+function verifyAdminToken(token) {
+  if (!token || typeof token !== "string" || !token.includes(".")) return false;
+  const [payloadB64, sig] = token.split(".");
+  const expectedSig = crypto.createHmac("sha256", JWT_SECRET).update(payloadB64).digest("hex");
+  if (sig !== expectedSig) return false;
+  try {
+    const payload = JSON.parse(Buffer.from(payloadB64, "base64").toString("utf8"));
+    return payload.exp > Date.now() && payload.role === "admin";
+  } catch {
+    return false;
+  }
+}
+
+function requireAdmin(req, res, next) {
+  const authHeader = req.headers.authorization;
+  if (!authHeader || !authHeader.startsWith("Bearer ")) {
+    return res.status(401).json({ error: "Yêu cầu quyền quản trị viên (Admin)" });
+  }
+  const token = authHeader.split(" ")[1];
+  if (!verifyAdminToken(token)) {
+    return res.status(401).json({ error: "Phiên làm việc của Admin đã hết hạn hoặc không hợp lệ" });
+  }
+  next();
+}
+
 // ---------- Local JSON DB Helpers ----------
 function loadLocalDB() {
   try {
-    return JSON.parse(fs.readFileSync(DATA_FILE, "utf8"));
+    const data = JSON.parse(fs.readFileSync(DATA_FILE, "utf8"));
+    return {
+      employees: data.employees || [],
+      entries: data.entries || [],
+      settings: data.settings || {},
+    };
   } catch {
-    return { employees: [], entries: [] };
+    return { employees: [], entries: [], settings: {} };
   }
 }
 
@@ -38,6 +96,33 @@ function saveLocalDB(dbData) {
 
 // ---------- Database Abstraction Layer ----------
 const db = {
+  async getSetting(key) {
+    if (isSupabase) {
+      const { data, error } = await supabase.from("system_settings").select("value").eq("key", key).maybeSingle();
+      if (error) throw error;
+      return data ? data.value : null;
+    }
+    const local = loadLocalDB();
+    return local.settings && local.settings[key] ? local.settings[key] : null;
+  },
+
+  async setSetting(key, value) {
+    if (isSupabase) {
+      const { data, error } = await supabase
+        .from("system_settings")
+        .upsert({ key, value, updated_at: new Date().toISOString() })
+        .select()
+        .single();
+      if (error) throw error;
+      return data ? data.value : value;
+    }
+    const local = loadLocalDB();
+    if (!local.settings) local.settings = {};
+    local.settings[key] = value;
+    saveLocalDB(local);
+    return value;
+  },
+
   async getEmployees() {
     if (isSupabase) {
       const { data, error } = await supabase.from("employees").select("*").order("name");
@@ -74,12 +159,18 @@ const db = {
     return { ok: true };
   },
 
-  async getEntries(month) {
+  async getEntries(filters = {}) {
+    const { month, employeeId, startDate, endDate, mode } =
+      typeof filters === "string" ? { month: filters } : filters;
+
     if (isSupabase) {
       let query = supabase.from("entries").select("*").order("date", { ascending: false });
-      if (month) {
-        query = query.like("date", `${month}%`);
-      }
+      if (month) query = query.like("date", `${month}%`);
+      if (employeeId) query = query.eq("employee_id", employeeId);
+      if (startDate) query = query.gte("date", startDate);
+      if (endDate) query = query.lte("date", endDate);
+      if (mode) query = query.eq("mode", mode);
+
       const { data, error } = await query;
       if (error) throw error;
       return (data || []).map((e) => ({
@@ -92,9 +183,14 @@ const db = {
         note: e.note || "",
       }));
     }
+
     let entries = loadLocalDB().entries;
     if (month) entries = entries.filter((e) => e.date.startsWith(month));
-    return entries;
+    if (employeeId) entries = entries.filter((e) => e.employeeId === employeeId);
+    if (startDate) entries = entries.filter((e) => e.date >= startDate);
+    if (endDate) entries = entries.filter((e) => e.date <= endDate);
+    if (mode) entries = entries.filter((e) => e.mode === mode);
+    return entries.sort((a, b) => b.date.localeCompare(a.date));
   },
 
   async createEntry(entry) {
@@ -178,6 +274,65 @@ const db = {
 app.use(express.json());
 app.use(express.static(path.join(__dirname, "public")));
 
+// ---------- Admin Authentication Endpoints ----------
+app.post("/api/admin/login", async (req, res) => {
+  try {
+    const { password } = req.body || {};
+    if (!password) {
+      return res.status(400).json({ error: "Vui lòng nhập mật khẩu quản trị" });
+    }
+    let authSetting = await db.getSetting("admin_auth");
+    if (!authSetting || !authSetting.hash) {
+      const { hash, salt } = hashPassword("admin123");
+      authSetting = { hash, salt, updated_at: new Date().toISOString() };
+      await db.setSetting("admin_auth", authSetting);
+    }
+    const isValid = verifyPassword(password, authSetting.hash, authSetting.salt);
+    if (!isValid) {
+      return res.status(401).json({ error: "Mật khẩu quản trị không chính xác" });
+    }
+    const token = generateAdminToken();
+    res.json({ token });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.get("/api/admin/status", (req, res) => {
+  const authHeader = req.headers.authorization;
+  if (!authHeader || !authHeader.startsWith("Bearer ")) {
+    return res.json({ isAdmin: false });
+  }
+  const token = authHeader.split(" ")[1];
+  res.json({ isAdmin: verifyAdminToken(token) });
+});
+
+app.post("/api/admin/change-password", requireAdmin, async (req, res) => {
+  try {
+    const { currentPassword, newPassword } = req.body || {};
+    if (!currentPassword || !newPassword) {
+      return res.status(400).json({ error: "Thiếu mật khẩu hiện tại hoặc mật khẩu mới" });
+    }
+    if (newPassword.length < 6) {
+      return res.status(400).json({ error: "Mật khẩu mới phải có ít nhất 6 ký tự" });
+    }
+    let authSetting = await db.getSetting("admin_auth");
+    if (!authSetting || !authSetting.hash) {
+      const init = hashPassword("admin123");
+      authSetting = { hash: init.hash, salt: init.salt, updated_at: new Date().toISOString() };
+      await db.setSetting("admin_auth", authSetting);
+    }
+    if (!verifyPassword(currentPassword, authSetting.hash, authSetting.salt)) {
+      return res.status(400).json({ error: "Mật khẩu hiện tại không đúng" });
+    }
+    const { hash, salt } = hashPassword(newPassword);
+    await db.setSetting("admin_auth", { hash, salt, updated_at: new Date().toISOString() });
+    res.json({ ok: true, message: "Đổi mật khẩu Admin thành công" });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // ---------- Employees Endpoints ----------
 app.get("/api/employees", async (req, res) => {
   try {
@@ -188,7 +343,7 @@ app.get("/api/employees", async (req, res) => {
   }
 });
 
-app.post("/api/employees", async (req, res) => {
+app.post("/api/employees", requireAdmin, async (req, res) => {
   const name = (req.body.name || "").trim();
   if (!name) return res.status(400).json({ error: "Tên không được để trống" });
   try {
@@ -199,7 +354,7 @@ app.post("/api/employees", async (req, res) => {
   }
 });
 
-app.delete("/api/employees/:id", async (req, res) => {
+app.delete("/api/employees/:id", requireAdmin, async (req, res) => {
   try {
     const result = await db.deleteEmployee(req.params.id);
     res.json(result);
@@ -211,8 +366,8 @@ app.delete("/api/employees/:id", async (req, res) => {
 // ---------- Entries Endpoints ----------
 app.get("/api/entries", async (req, res) => {
   try {
-    const { month } = req.query; // "YYYY-MM"
-    const entries = await db.getEntries(month);
+    const { month, employeeId, startDate, endDate, mode } = req.query;
+    const entries = await db.getEntries({ month, employeeId, startDate, endDate, mode });
     res.json(entries);
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -261,7 +416,7 @@ app.put("/api/entries/:id", async (req, res) => {
   }
 });
 
-app.delete("/api/entries/:id", async (req, res) => {
+app.delete("/api/entries/:id", requireAdmin, async (req, res) => {
   try {
     const result = await db.deleteEntry(req.params.id);
     res.json(result);
@@ -277,4 +432,12 @@ if (process.env.NODE_ENV !== "test" && !process.env.VERCEL) {
   });
 }
 
-module.exports = app;
+module.exports = {
+  app,
+  db,
+  hashPassword,
+  verifyPassword,
+  generateAdminToken,
+  verifyAdminToken,
+  requireAdmin,
+};
