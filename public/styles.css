@@ -34,11 +34,33 @@ body {
 .topbar {
   display: flex;
   justify-content: space-between;
-  align-items: flex-end;
+  align-items: center;
   border-bottom: 2px solid var(--ink);
   padding-bottom: 16px;
   margin-bottom: 20px;
+  gap: 16px;
 }
+
+.topbar-left {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.app-logo {
+  height: 46px;
+  width: auto;
+  max-width: 150px;
+  object-fit: contain;
+  border-radius: 4px;
+  filter: drop-shadow(0 1px 2px rgba(34, 48, 60, 0.08));
+}
+
+.brand-info {
+  display: flex;
+  flex-direction: column;
+}
+
 .eyebrow {
   font-family: var(--font-mono);
   font-size: 11px;
@@ -48,7 +70,7 @@ body {
 .topbar h1 {
   font-family: var(--font-display);
   font-weight: 700;
-  font-size: 26px;
+  font-size: 24px;
   margin: 2px 0 0;
 }
 
@@ -279,6 +301,7 @@ body {
   background: white;
   border-radius: 6px;
   padding: 10px 12px;
+  animation: fadeIn 0.2s ease-out;
 }
 .entry-row .name {
   font-family: var(--font-display);
@@ -380,6 +403,7 @@ body {
   background: white;
   border-radius: 6px;
   padding: 10px 12px;
+  animation: fadeIn 0.2s ease-out;
 }
 .emp-row .name { font-family: var(--font-display); font-weight: 600; font-size: 14px; }
 .emp-row .del-btn {
@@ -391,12 +415,39 @@ body {
 }
 
 .empty-state {
-  padding: 32px 0;
+  padding: 28px 0;
   text-align: center;
   color: var(--ink-soft);
   font-size: 13px;
   border: 1px dashed var(--line);
   border-radius: 6px;
+}
+
+/* Loading effects */
+.loading-pulse {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: var(--ink-soft);
+}
+.loading-spinner {
+  width: 14px;
+  height: 14px;
+  border: 2px solid var(--line);
+  border-top-color: var(--stamp);
+  border-radius: 50%;
+  animation: spin 0.75s linear infinite;
+}
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(4px); }
+  to { opacity: 1; transform: translateY(0); }
 }
 
 .summary-table { border: 1px solid var(--line); border-radius: 6px; overflow: hidden; }
@@ -406,6 +457,7 @@ body {
   padding: 10px 12px;
   align-items: center;
   font-size: 13px;
+  animation: fadeIn 0.2s ease-out;
 }
 .summary-row.header {
   background: var(--ink);
@@ -435,6 +487,8 @@ body {
 }
 
 @media (max-width: 640px) {
+  .topbar { flex-direction: column; align-items: flex-start; gap: 12px; }
+  .topbar-right { align-self: flex-end; }
   .time-grid-simple { grid-template-columns: 1fr; }
   .form-row.main-fields { grid-template-columns: 1fr; }
   .form-row.note-row { flex-direction: column; }

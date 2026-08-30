@@ -333,7 +333,7 @@ async function renderDayEntries() {
   weekdayLabel.textContent = weekdayLabelFor(date);
   const mk = monthKeyOf(date);
   const list = document.getElementById("entryList");
-  list.innerHTML = `<div class="empty-state">${t("loading")}</div>`;
+  list.innerHTML = `<div class="empty-state"><span class="loading-pulse"><span class="loading-spinner"></span> ${t("loading")}</span></div>`;
   try {
     const monthEntries = await ensureMonthLoaded(mk);
     const dayEntries = monthEntries.filter((e) => e.date === date);
@@ -534,7 +534,7 @@ async function renderSummary() {
     box.innerHTML = `<div class="empty-state">${t("emptySummary")}</div>`;
     return;
   }
-  box.innerHTML = `<div class="empty-state">${t("loading")}</div>`;
+  box.innerHTML = `<div class="empty-state"><span class="loading-pulse"><span class="loading-spinner"></span> ${t("loading")}</span></div>`;
   try {
     const entries = await ensureMonthLoaded(mk);
     let grand = 0;
