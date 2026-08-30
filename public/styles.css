@@ -51,6 +51,46 @@ body {
   font-size: 26px;
   margin: 2px 0 0;
 }
+
+/* Language Switcher */
+.topbar-right {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.lang-switch {
+  display: flex;
+  align-items: center;
+  background: var(--paper-deep);
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  padding: 2px 6px;
+}
+.lang-btn {
+  background: transparent;
+  border: none;
+  color: var(--ink-soft);
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 2px 5px;
+  border-radius: 4px;
+  transition: all 0.15s;
+}
+.lang-btn:hover {
+  color: var(--ink);
+}
+.lang-btn.active {
+  background: var(--ink);
+  color: var(--paper);
+}
+.lang-divider {
+  color: var(--line);
+  font-size: 11px;
+  margin: 0 2px;
+}
+
 .emp-count {
   font-family: var(--font-mono);
   font-size: 12px;
@@ -114,16 +154,24 @@ body {
 .muted { color: var(--ink-soft); }
 .mono { font-family: var(--font-mono); }
 
+/* Entry Form */
 .entry-form {
-  display: grid;
-  grid-template-columns: repeat(5, 1fr);
-  gap: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
   margin-bottom: 20px;
-  padding: 12px;
+  padding: 14px;
   background: var(--paper);
   border: 1px dashed var(--line);
   border-radius: 6px;
 }
+
+.form-row.main-fields {
+  display: grid;
+  grid-template-columns: 2fr 1fr;
+  gap: 8px;
+}
+
 .entry-form select,
 .entry-form input {
   padding: 8px;
@@ -133,8 +181,62 @@ body {
   font-size: 13px;
   font-family: var(--font-body);
 }
-.entry-form input[type="time"] { font-family: var(--font-mono); }
-.note-input { grid-column: 1 / -1; }
+
+/* Time Grid Layout */
+.time-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 8px;
+}
+.time-field {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+.time-field label {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  color: var(--ink-soft);
+}
+.time-input-wrap {
+  display: flex;
+  align-items: center;
+  background: white;
+  border: 1px solid var(--line);
+  border-radius: 5px;
+  overflow: hidden;
+}
+.time-input-wrap input[type="time"] {
+  border: none;
+  background: transparent;
+  width: 100%;
+  padding: 6px 8px;
+  font-family: var(--font-mono);
+  font-size: 13px;
+}
+.btn-now {
+  background: var(--paper-deep);
+  border: none;
+  border-left: 1px solid var(--line);
+  padding: 6px 8px;
+  cursor: pointer;
+  font-size: 12px;
+  color: var(--ink-soft);
+  transition: all 0.15s;
+}
+.btn-now:hover {
+  background: var(--line);
+  color: var(--stamp);
+}
+
+.form-row.note-row {
+  display: flex;
+  gap: 8px;
+}
+.full-width { flex: 1; }
+
 .btn-primary {
   background: var(--ink);
   color: var(--paper);
@@ -144,15 +246,17 @@ body {
   font-weight: 600;
   font-size: 13px;
   cursor: pointer;
-  padding: 8px;
+  padding: 8px 16px;
+  white-space: nowrap;
 }
 .btn-primary:hover { opacity: 0.9; }
 
+/* Entry List */
 .entry-list { display: flex; flex-direction: column; gap: 8px; }
 .entry-row {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 10px;
   flex-wrap: wrap;
   background: white;
   border-radius: 6px;
@@ -169,6 +273,16 @@ body {
   font-size: 13px;
   color: var(--ink-soft);
 }
+.lunch-badge {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--ink-soft);
+  background: var(--paper);
+  border: 1px solid var(--line);
+  padding: 1px 5px;
+  border-radius: 3px;
+  margin-left: 4px;
+}
 .entry-row .hours {
   font-family: var(--font-mono);
   font-size: 13px;
@@ -176,7 +290,7 @@ body {
 }
 .entry-row .note {
   font-size: 12px;
-  color: var(--ink-soft);
+  color: var(--ink);
   font-style: italic;
 }
 .entry-row .del-btn {
@@ -279,6 +393,8 @@ body {
 }
 
 @media (max-width: 640px) {
-  .entry-form { grid-template-columns: repeat(2, 1fr); }
+  .time-grid { grid-template-columns: repeat(2, 1fr); }
+  .form-row.main-fields { grid-template-columns: 1fr; }
+  .form-row.note-row { flex-direction: column; }
   .summary-row { grid-template-columns: 1.5fr 1fr 1fr 0.8fr; font-size: 12px; }
 }
