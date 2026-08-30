@@ -28,7 +28,7 @@
 - Consumes: `POST /api/entries` payload `{ date, employeeId, in, out, lunchOut, lunchIn, mode, note }`
 - Produces: `entry` object với các trường `id, date, employeeId, in, out, lunchOut, lunchIn, mode, note`
 
-- [ ] **Step 1: Viết test cho API validation và lưu trường nghỉ trưa**
+- [x] **Step 1: Viết test cho API validation và lưu trường nghỉ trưa**
 
 Tạo file `test/test_api.js`:
 ```javascript
@@ -91,12 +91,12 @@ function runTest() {
 runTest();
 ```
 
-- [ ] **Step 2: Chạy test để xác nhận fail hoặc pass logic độc lập**
+- [x] **Step 2: Chạy test để xác nhận fail hoặc pass logic độc lập**
 
 Run: `node test/test_api.js`
 Expected: `All backend tests passed!`
 
-- [ ] **Step 3: Cập nhật `server.js`**
+- [x] **Step 3: Cập nhật `server.js`**
 
 Sửa `server.js` tại endpoint `POST /api/entries`:
 ```javascript
@@ -124,7 +124,7 @@ app.post("/api/entries", (req, res) => {
 });
 ```
 
-- [ ] **Step 4: Kiểm tra cú pháp `server.js`**
+- [x] **Step 4: Kiểm tra cú pháp `server.js`**
 
 Run: `node -c server.js`
 Expected: Cú pháp hợp lệ, exit code 0.
@@ -143,7 +143,7 @@ Expected: Cú pháp hợp lệ, exit code 0.
   - Quick-time fill buttons: `.btn-now[data-target="..."]`
   - Dynamic elements with `data-i18n` attributes for localization
 
-- [ ] **Step 1: Thêm nút chuyển đổi ngôn ngữ vào Header và gắn data-i18n**
+- [x] **Step 1: Thêm nút chuyển đổi ngôn ngữ vào Header và gắn data-i18n**
 
 Cập nhật `<header class="topbar">` trong `public/index.html`:
 ```html
@@ -163,7 +163,7 @@ Cập nhật `<header class="topbar">` trong `public/index.html`:
     </header>
 ```
 
-- [ ] **Step 2: Cập nhật Tabs và Form Chấm công với 4 mốc thời gian & Ghi chú bắt buộc**
+- [x] **Step 2: Cập nhật Tabs và Form Chấm công với 4 mốc thời gian & Ghi chú bắt buộc**
 
 Cập nhật thanh Tabs và `<section id="tab-cham-cong">` trong `public/index.html`:
 ```html
@@ -243,7 +243,7 @@ Cập nhật thanh Tabs và `<section id="tab-cham-cong">` trong `public/index.h
       </section>
 ```
 
-- [ ] **Step 3: Cập nhật Tab Nhân viên & Tổng hợp với các nhãn `data-i18n`**
+- [x] **Step 3: Cập nhật Tab Nhân viên & Tổng hợp với các nhãn `data-i18n`**
 
 Cập nhật `<section id="tab-nhan-vien">` và `<section id="tab-tong-hop">`:
 ```html
@@ -276,7 +276,7 @@ Cập nhật `<section id="tab-nhan-vien">` và `<section id="tab-tong-hop">`:
 **Interfaces:**
 - Styles for `.topbar-right`, `.lang-switch`, `.lang-btn`, `.time-grid`, `.time-field`, `.time-input-wrap`, `.btn-now`, responsive breakpoints.
 
-- [ ] **Step 1: Bổ sung CSS cho Language Switcher và Time Grid 4 ô**
+- [x] **Step 1: Bổ sung CSS cho Language Switcher và Time Grid 4 ô**
 
 Thêm vào `public/styles.css`:
 ```css
@@ -410,7 +410,7 @@ Thêm vào `public/styles.css`:
   - Click listener for `.btn-now` to fill current `HH:mm`
   - Updated `renderDayEntries()`, `renderSummary()`, and `loadEmployees()` with bilingual labels
 
-- [ ] **Step 1: Thêm bộ từ điển i18n và hàm chuyển ngôn ngữ**
+- [x] **Step 1: Thêm bộ từ điển i18n và hàm chuyển ngôn ngữ**
 
 Thêm vào đầu file `public/app.js`:
 ```javascript
@@ -522,7 +522,7 @@ function setLanguage(lang) {
 }
 ```
 
-- [ ] **Step 2: Cập nhật hàm tính giờ `hoursBetween` trừ thời gian nghỉ trưa**
+- [x] **Step 2: Cập nhật hàm tính giờ `hoursBetween` trừ thời gian nghỉ trưa**
 
 ```javascript
 function timeToMinutes(tStr) {
@@ -554,7 +554,7 @@ function hoursBetween(inStr, outStr, lunchOutStr, lunchInStr, mode) {
 }
 ```
 
-- [ ] **Step 3: Cập nhật đổi placeholder động và xử lý nút ⚡ (Now)**
+- [x] **Step 3: Cập nhật đổi placeholder động và xử lý nút ⚡ (Now)**
 
 ```javascript
 function updatePlaceholder() {
@@ -588,7 +588,7 @@ document.querySelectorAll(".btn-now").forEach((btn) => {
 });
 ```
 
-- [ ] **Step 4: Cập nhật xử lý Submit Form và hiển thị danh sách Entries**
+- [x] **Step 4: Cập nhật xử lý Submit Form và hiển thị danh sách Entries**
 
 ```javascript
 entryForm.addEventListener("submit", async (ev) => {
@@ -652,7 +652,7 @@ dayEntries.forEach((e) => {
 });
 ```
 
-- [ ] **Step 5: Cập nhật hàm `renderSummary()` tính tổng giờ và nhãn đa ngôn ngữ**
+- [x] **Step 5: Cập nhật hàm `renderSummary()` tính tổng giờ và nhãn đa ngôn ngữ**
 
 ```javascript
 const rows = state.employees.map((emp) => {
@@ -686,7 +686,7 @@ box.innerHTML = `
 `;
 ```
 
-- [ ] **Step 6: Đăng ký sự kiện chọn ngôn ngữ**
+- [x] **Step 6: Đăng ký sự kiện chọn ngôn ngữ**
 
 ```javascript
 document.getElementById("langVi").addEventListener("click", () => setLanguage("vi"));
@@ -700,7 +700,7 @@ document.getElementById("langEn").addEventListener("click", () => setLanguage("e
 **Files:**
 - Create: `test/test_e2e_calc.js`
 
-- [ ] **Step 1: Viết test kiểm tra tính toán giờ làm với nhiều trường hợp (Có nghỉ trưa, không nghỉ trưa, nghỉ cả ngày)**
+- [x] **Step 1: Viết test kiểm tra tính toán giờ làm với nhiều trường hợp (Có nghỉ trưa, không nghỉ trưa, nghỉ cả ngày)**
 
 Tạo file `test/test_e2e_calc.js`:
 ```javascript
@@ -749,7 +749,7 @@ assert.strictEqual(c3, 0, `Expected 0h for Off mode, got ${c3}`);
 console.log("All calculation verification tests passed!");
 ```
 
-- [ ] **Step 2: Chạy test kiểm tra**
+- [x] **Step 2: Chạy test kiểm tra**
 
 Run: `node test/test_e2e_calc.js`
 Expected: `All calculation verification tests passed!`
