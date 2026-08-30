@@ -3,41 +3,215 @@ const state = {
   entriesCache: {}, // monthKey -> array
 };
 
+// ---------- i18n Dictionary ----------
+const dict = {
+  vi: {
+    eyebrow: "LEDGER · NỘI BỘ",
+    appTitle: "Bảng Chấm Công",
+    tabChamCong: "Chấm công",
+    tabNhanVien: "Nhân viên",
+    tabTongHop: "Tổng hợp",
+    selectEmployee: "Nhân viên",
+    modeOnsite: "Onsite",
+    modeRemote: "Remote",
+    modeOff: "Nghỉ",
+    labelInTime: "Giờ vào",
+    labelLunchOut: "Nghỉ trưa",
+    labelLunchIn: "Hết nghỉ",
+    labelOutTime: "Giờ ra",
+    placeholderTask: "Công việc hôm nay làm: ...",
+    placeholderReason: "Lý do nghỉ (bắt buộc)...",
+    placeholderNewEmp: "Tên nhân viên mới",
+    btnRecord: "+ Ghi nhận",
+    btnAddEmp: "+ Thêm",
+    emptyDay: "Chưa có ai chấm công ngày này.",
+    emptyEmp: "Chưa có nhân viên nào.",
+    emptySummary: "Chưa có nhân viên nào để tổng hợp.",
+    loading: "Đang tải...",
+    thEmployee: "NHÂN VIÊN",
+    thTotalHours: "TỔNG GIỜ",
+    thOnsiteRemote: "ONSITE / REMOTE",
+    thOff: "NGHỈ",
+    thTotal: "TỔNG CỘNG",
+    empCountLabel: "nhân viên",
+    deletedEmp: "(đã xoá)",
+    lunchBreakPrefix: "Nghỉ trưa",
+    errMissingFields: "Vui lòng chọn nhân viên và nhập đầy đủ thông tin!",
+    errNoteEmpty: "Ghi chú không được để trống!",
+    footerNote: "Dữ liệu lưu trên server nội bộ — mọi người trong team dùng chung một bảng.",
+    daysOfWeek: ["CN", "Th 2", "Th 3", "Th 4", "Th 5", "Th 6", "Th 7"],
+    monthPrefix: "Tháng",
+  },
+  en: {
+    eyebrow: "LEDGER · INTERNAL",
+    appTitle: "Timesheet App",
+    tabChamCong: "Timesheet",
+    tabNhanVien: "Employees",
+    tabTongHop: "Summary",
+    selectEmployee: "Select Employee",
+    modeOnsite: "Onsite",
+    modeRemote: "Remote",
+    modeOff: "Off",
+    labelInTime: "Check-in",
+    labelLunchOut: "Lunch Out",
+    labelLunchIn: "Lunch In",
+    labelOutTime: "Check-out",
+    placeholderTask: "Today's tasks: ...",
+    placeholderReason: "Reason for leave (required)...",
+    placeholderNewEmp: "New employee name",
+    btnRecord: "+ Record",
+    btnAddEmp: "+ Add",
+    emptyDay: "No entries for this date.",
+    emptyEmp: "No employees added yet.",
+    emptySummary: "No employees available for summary.",
+    loading: "Loading...",
+    thEmployee: "EMPLOYEE",
+    thTotalHours: "TOTAL HOURS",
+    thOnsiteRemote: "ONSITE / REMOTE",
+    thOff: "OFF",
+    thTotal: "GRAND TOTAL",
+    empCountLabel: "employees",
+    deletedEmp: "(deleted)",
+    lunchBreakPrefix: "Lunch",
+    errMissingFields: "Please select an employee and fill all required fields!",
+    errNoteEmpty: "Note cannot be empty!",
+    footerNote: "Data saved on internal server — shared across the team.",
+    daysOfWeek: ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"],
+    monthPrefix: "Month",
+  },
+};
+
+let currentLang = localStorage.getItem("ts_lang") || "vi";
+
+function t(key) {
+  return dict[currentLang]?.[key] || dict["vi"][key] || key;
+}
+
+function setLanguage(lang) {
+  currentLang = lang;
+  localStorage.setItem("ts_lang", lang);
+  document.getElementById("langVi").classList.toggle("active", lang === "vi");
+  document.getElementById("langEn").classList.toggle("active", lang === "en");
+
+  // Cập nhật các text data-i18n
+  document.querySelectorAll("[data-i18n]").forEach((el) => {
+    const k = el.getAttribute("data-i18n");
+    if (k && t(k)) el.textContent = t(k);
+  });
+
+  // Cập nhật placeholders
+  document.querySelectorAll("[data-i18n-ph]").forEach((el) => {
+    const k = el.getAttribute("data-i18n-ph");
+    if (k && t(k)) el.placeholder = t(k);
+  });
+
+  updatePlaceholder();
+  renderEmployeeSelect();
+  renderDayEntries();
+  renderEmployeeList();
+  renderSummary();
+  updateEmpCount();
+}
+
 // ---------- Helpers ----------
 function todayStr() {
   return new Date().toISOString().slice(0, 10);
 }
+
 function monthKeyOf(dateStr) {
   return dateStr ? dateStr.slice(0, 7) : "";
 }
-function hoursBetween(inStr, outStr) {
-  if (!inStr || !outStr) return 0;
-  const [ih, im] = inStr.split(":").map(Number);
-  const [oh, om] = outStr.split(":").map(Number);
-  const diff = oh * 60 + om - (ih * 60 + im);
-  return diff > 0 ? diff / 60 : 0;
+
+function timeToMinutes(tStr) {
+  if (!tStr) return null;
+  const [h, m] = tStr.split(":").map(Number);
+  if (isNaN(h) || isNaN(m)) return null;
+  return h * 60 + m;
 }
+
+function hoursBetween(inStr, outStr, lunchOutStr, lunchInStr, mode) {
+  if (mode === "Nghỉ" || mode === "Off") return 0;
+  const inMin = timeToMinutes(inStr);
+  const outMin = timeToMinutes(outStr);
+  if (inMin === null || outMin === null || outMin <= inMin) return 0;
+
+  let totalWorkMinutes = outMin - inMin;
+
+  const lOutMin = timeToMinutes(lunchOutStr);
+  const lInMin = timeToMinutes(lunchInStr);
+
+  if (lOutMin !== null && lInMin !== null && lInMin > lOutMin) {
+    const actualLunchStart = Math.max(inMin, lOutMin);
+    const actualLunchEnd = Math.min(outMin, lInMin);
+    if (actualLunchEnd > actualLunchStart) {
+      totalWorkMinutes -= (actualLunchEnd - actualLunchStart);
+    }
+  }
+
+  return totalWorkMinutes > 0 ? totalWorkMinutes / 60 : 0;
+}
+
 function fmtHours(h) {
   return h.toFixed(2).replace(".", ",") + "h";
 }
-function weekdayVN(dateStr) {
-  const days = ["CN", "Th 2", "Th 3", "Th 4", "Th 5", "Th 6", "Th 7"];
-  return days[new Date(dateStr + "T00:00:00").getDay()];
+
+function weekdayLabelFor(dateStr) {
+  const dayIdx = new Date(dateStr + "T00:00:00").getDay();
+  return dict[currentLang].daysOfWeek[dayIdx];
 }
+
 function monthLabel(mk) {
   if (!mk) return "";
   const [y, m] = mk.split("-");
-  return `Tháng ${parseInt(m, 10)}/${y}`;
+  return `${dict[currentLang].monthPrefix} ${parseInt(m, 10)}/${y}`;
 }
+
 function empName(id) {
-  return state.employees.find((e) => e.id === id)?.name || "(đã xoá)";
+  return state.employees.find((e) => e.id === id)?.name || t("deletedEmp");
 }
+
+function updateEmpCount() {
+  const count = state.employees.length;
+  document.getElementById("empCount").textContent = `${count} ${t("empCountLabel")}`;
+}
+
 function showError(msg) {
   const box = document.getElementById("errorBox");
   box.textContent = msg;
   box.style.display = "block";
   setTimeout(() => (box.style.display = "none"), 4000);
 }
+
+// ---------- Dynamic Placeholder & Form Behavior ----------
+function updatePlaceholder() {
+  const mode = document.getElementById("modeSelect").value;
+  const noteInput = document.getElementById("noteInput");
+  const timeGrid = document.getElementById("timeGrid");
+
+  if (mode === "Nghỉ") {
+    noteInput.placeholder = t("placeholderReason");
+    timeGrid.style.opacity = "0.45";
+  } else {
+    noteInput.placeholder = t("placeholderTask");
+    timeGrid.style.opacity = "1";
+  }
+}
+
+document.getElementById("modeSelect").addEventListener("change", updatePlaceholder);
+
+// Quick-fill current time for buttons
+document.querySelectorAll(".btn-now").forEach((btn) => {
+  btn.addEventListener("click", () => {
+    const targetId = btn.dataset.target;
+    const input = document.getElementById(targetId);
+    if (input) {
+      const now = new Date();
+      const hh = String(now.getHours()).padStart(2, "0");
+      const mm = String(now.getMinutes()).padStart(2, "0");
+      input.value = `${hh}:${mm}`;
+    }
+  });
+});
 
 // ---------- API ----------
 async function api(path, opts) {
@@ -56,7 +230,7 @@ async function loadEmployees() {
   state.employees = await api("/api/employees");
   renderEmployeeSelect();
   renderEmployeeList();
-  document.getElementById("empCount").textContent = `${state.employees.length} nhân viên`;
+  updateEmpCount();
 }
 
 async function ensureMonthLoaded(mk) {
@@ -86,7 +260,7 @@ dateInput.value = todayStr();
 
 function renderEmployeeSelect() {
   const keep = empSelect.value;
-  empSelect.innerHTML = '<option value="">Nhân viên</option>';
+  empSelect.innerHTML = `<option value="">${t("selectEmployee")}</option>`;
   state.employees.forEach((e) => {
     const opt = document.createElement("option");
     opt.value = e.id;
@@ -98,36 +272,45 @@ function renderEmployeeSelect() {
 
 async function renderDayEntries() {
   const date = dateInput.value;
-  weekdayLabel.textContent = weekdayVN(date);
+  if (!date) return;
+  weekdayLabel.textContent = weekdayLabelFor(date);
   const mk = monthKeyOf(date);
   const list = document.getElementById("entryList");
-  list.innerHTML = '<div class="empty-state">Đang tải...</div>';
+  list.innerHTML = `<div class="empty-state">${t("loading")}</div>`;
   try {
     const monthEntries = await ensureMonthLoaded(mk);
     const dayEntries = monthEntries.filter((e) => e.date === date);
     if (dayEntries.length === 0) {
-      list.innerHTML = '<div class="empty-state">Chưa có ai chấm công ngày này.</div>';
+      list.innerHTML = `<div class="empty-state">${t("emptyDay")}</div>`;
       return;
     }
     list.innerHTML = "";
     dayEntries.forEach((e) => {
-      const h = hoursBetween(e.in, e.out);
+      const h = hoursBetween(e.in, e.out, e.lunchOut, e.lunchIn, e.mode);
       const row = document.createElement("div");
       row.className = "entry-row";
       row.style.borderLeft = `3px solid var(--${e.mode === "Onsite" ? "onsite" : e.mode === "Remote" ? "remote" : "off"})`;
+      
+      let lunchInfo = "";
+      if (e.lunchOut && e.lunchIn) {
+        lunchInfo = `<span class="lunch-badge">${t("lunchBreakPrefix")}: ${e.lunchOut} → ${e.lunchIn}</span>`;
+      }
+
+      const modeText = e.mode === "Nghỉ" ? t("modeOff") : e.mode;
+
       row.innerHTML = `
         <span class="name">${empName(e.employeeId)}</span>
-        <span class="times">${e.in || "--:--"} → ${e.out || "--:--"}</span>
+        <span class="times">${e.in || "--:--"} → ${e.out || "--:--"}${lunchInfo}</span>
         <span class="hours">${fmtHours(h)}</span>
-        <span class="stamp ${e.mode}">${e.mode}</span>
-        ${e.note ? `<span class="note">${e.note}</span>` : ""}
+        <span class="stamp ${e.mode}">${modeText}</span>
+        <span class="note">${e.note || ""}</span>
         <button class="del-btn" data-id="${e.id}" aria-label="Xoá">🗑</button>
       `;
       row.querySelector(".del-btn").addEventListener("click", () => deleteEntry(e.id, mk));
       list.appendChild(row);
     });
   } catch (err) {
-    list.innerHTML = '<div class="empty-state">Không tải được dữ liệu.</div>';
+    list.innerHTML = `<div class="empty-state">${t("emptyDay")}</div>`;
     showError(err.message);
   }
 }
@@ -137,20 +320,28 @@ dateInput.addEventListener("change", renderDayEntries);
 entryForm.addEventListener("submit", async (ev) => {
   ev.preventDefault();
   const employeeId = empSelect.value;
-  if (!employeeId) return;
+  const note = document.getElementById("noteInput").value.trim();
+  if (!employeeId) return showError(t("errMissingFields"));
+  if (!note) return showError(t("errNoteEmpty"));
+
   const payload = {
     date: dateInput.value,
     employeeId,
     in: document.getElementById("inTime").value,
+    lunchOut: document.getElementById("lunchOutTime").value,
+    lunchIn: document.getElementById("lunchInTime").value,
     out: document.getElementById("outTime").value,
     mode: document.getElementById("modeSelect").value,
-    note: document.getElementById("noteInput").value,
+    note,
   };
+
   try {
     const entry = await api("/api/entries", { method: "POST", body: JSON.stringify(payload) });
     const mk = monthKeyOf(entry.date);
     state.entriesCache[mk] = [...(state.entriesCache[mk] || []), entry];
     document.getElementById("inTime").value = "";
+    document.getElementById("lunchOutTime").value = "";
+    document.getElementById("lunchInTime").value = "";
     document.getElementById("outTime").value = "";
     document.getElementById("noteInput").value = "";
     renderDayEntries();
@@ -178,7 +369,7 @@ const newEmpName = document.getElementById("newEmpName");
 function renderEmployeeList() {
   const list = document.getElementById("empList");
   if (state.employees.length === 0) {
-    list.innerHTML = '<div class="empty-state">Chưa có nhân viên nào.</div>';
+    list.innerHTML = `<div class="empty-state">${t("emptyEmp")}</div>`;
     return;
   }
   list.innerHTML = "";
@@ -226,25 +417,25 @@ async function renderSummary() {
   monthLabelEl.textContent = monthLabel(mk);
   const box = document.getElementById("summaryTable");
   if (state.employees.length === 0) {
-    box.innerHTML = '<div class="empty-state">Chưa có nhân viên nào để tổng hợp.</div>';
+    box.innerHTML = `<div class="empty-state">${t("emptySummary")}</div>`;
     return;
   }
-  box.innerHTML = '<div class="empty-state">Đang tải...</div>';
+  box.innerHTML = `<div class="empty-state">${t("loading")}</div>`;
   try {
     const entries = await ensureMonthLoaded(mk);
     let grand = 0;
     const rows = state.employees.map((emp) => {
-      const rows = entries.filter((e) => e.employeeId === emp.id);
-      const total = rows.reduce((s, e) => s + hoursBetween(e.in, e.out), 0);
-      const onsite = rows.filter((e) => e.mode === "Onsite").length;
-      const remote = rows.filter((e) => e.mode === "Remote").length;
-      const off = rows.filter((e) => e.mode === "Nghỉ").length;
+      const empEntries = entries.filter((e) => e.employeeId === emp.id);
+      const total = empEntries.reduce((s, e) => s + hoursBetween(e.in, e.out, e.lunchOut, e.lunchIn, e.mode), 0);
+      const onsite = empEntries.filter((e) => e.mode === "Onsite").length;
+      const remote = empEntries.filter((e) => e.mode === "Remote").length;
+      const off = empEntries.filter((e) => e.mode === "Nghỉ").length;
       grand += total;
       return { name: emp.name, total, onsite, remote, off };
     });
     box.innerHTML = `
       <div class="summary-row header">
-        <div>NHÂN VIÊN</div><div>TỔNG GIỜ</div><div>ONSITE / REMOTE</div><div>NGHỈ</div>
+        <div>${t("thEmployee")}</div><div>${t("thTotalHours")}</div><div>${t("thOnsiteRemote")}</div><div>${t("thOff")}</div>
       </div>
       ${rows
         .map(
@@ -258,20 +449,25 @@ async function renderSummary() {
         )
         .join("")}
       <div class="summary-row total">
-        <div>TỔNG CỘNG</div><div class="mono-cell">${fmtHours(grand)}</div><div></div><div></div>
+        <div>${t("thTotal")}</div><div class="mono-cell">${fmtHours(grand)}</div><div></div><div></div>
       </div>
     `;
   } catch (err) {
-    box.innerHTML = '<div class="empty-state">Không tải được dữ liệu.</div>';
+    box.innerHTML = `<div class="empty-state">${t("emptySummary")}</div>`;
     showError(err.message);
   }
 }
 
 monthInput.addEventListener("change", renderSummary);
 
+// ---------- Language Switcher Listeners ----------
+document.getElementById("langVi").addEventListener("click", () => setLanguage("vi"));
+document.getElementById("langEn").addEventListener("click", () => setLanguage("en"));
+
 // ---------- Init ----------
 (async function init() {
   try {
+    setLanguage(currentLang);
     await loadEmployees();
     await renderDayEntries();
     await renderSummary();
