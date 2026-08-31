@@ -8,13 +8,22 @@ import { ensureMonthLoaded } from "./chamCong.js";
 export async function renderSummary() {
   const monthInput = document.getElementById("monthInput");
   const monthLabelEl = document.getElementById("monthLabel");
+  const btnSync = document.getElementById("btnSyncMonthSheet");
   const box = document.getElementById("summaryTable");
   if (!monthInput || !box) return;
+
+  if (btnSync) {
+    btnSync.style.display = state.isAdmin ? "" : "none";
+  }
 
   const mk = monthInput.value || monthKeyOf(todayStr());
   if (monthLabelEl) monthLabelEl.textContent = monthLabel(mk);
 
-  if (state.employees.length === 0) {
+  const relevantEmployees = !state.isAdmin && state.currentUser
+    ? state.employees.filter((e) => e.id === state.currentUser.id)
+    : state.employees;
+
+  if (relevantEmployees.length === 0) {
     box.innerHTML = `<div class="empty-state">${t("emptySummary")}</div>`;
     return;
   }
@@ -23,14 +32,15 @@ export async function renderSummary() {
   try {
     const entries = await ensureMonthLoaded(mk);
     let grand = 0;
-    const rows = state.employees.map((emp) => {
+    const rows = relevantEmployees.map((emp) => {
       const empEntries = entries.filter((e) => e.employeeId === emp.id);
       const total = empEntries.reduce((s, e) => s + (e.in && e.out ? hoursBetween(e.in, e.out, e.mode) : 0), 0);
       const onsite = empEntries.filter((e) => e.mode === "Onsite").length;
       const remote = empEntries.filter((e) => e.mode === "Remote").length;
       const off = empEntries.filter((e) => e.mode === "Nghỉ" || e.mode === "Off").length;
       grand += total;
-      return { name: emp.name, total, onsite, remote, off };
+      const displayName = emp.code ? `[${emp.code}] ${emp.name}` : emp.name;
+      return { name: displayName, total, onsite, remote, off };
     });
 
     box.innerHTML = `

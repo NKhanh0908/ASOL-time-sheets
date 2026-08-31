@@ -8,12 +8,21 @@ import { empName } from "./chamCong.js";
 export function renderFilterEmployeeSelect() {
   const filterEmpSelect = document.getElementById("filterEmpSelect");
   if (!filterEmpSelect) return;
+
+  if (!state.isAdmin && state.currentUser) {
+    filterEmpSelect.innerHTML = `<option value="${state.currentUser.id}">[${state.currentUser.code}] ${state.currentUser.name}</option>`;
+    filterEmpSelect.value = state.currentUser.id;
+    filterEmpSelect.disabled = true;
+    return;
+  }
+
+  filterEmpSelect.disabled = false;
   const keep = filterEmpSelect.value;
   filterEmpSelect.innerHTML = `<option value="">${t("filterAllEmployees")}</option>`;
   state.employees.forEach((e) => {
     const opt = document.createElement("option");
     opt.value = e.id;
-    opt.textContent = e.name;
+    opt.textContent = e.code ? `[${e.code}] ${e.name}` : e.name;
     filterEmpSelect.appendChild(opt);
   });
   filterEmpSelect.value = keep;
@@ -171,7 +180,9 @@ export function initLocChamCongTab(onDataChanged) {
   });
 
   btnResetFilter?.addEventListener("click", () => {
-    if (filterEmpSelect) filterEmpSelect.value = "";
+    if (filterEmpSelect) {
+      filterEmpSelect.value = !state.isAdmin && state.currentUser ? state.currentUser.id : "";
+    }
     if (filterStartDate) filterStartDate.value = "";
     if (filterEndDate) filterEndDate.value = "";
     if (filterModeSelect) filterModeSelect.value = "";

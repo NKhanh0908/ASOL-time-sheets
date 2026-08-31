@@ -1,6 +1,7 @@
 import { state } from "./state.js";
 import { currentLang, setLanguage } from "./i18n.js";
-import { initAdminAuth, checkAdminStatus } from "./modals/adminAuth.js";
+import { initLoginGate } from "./modals/loginGate.js";
+import { initAdminAuth, checkAuthStatus, updateTopbarUserUI } from "./modals/adminAuth.js";
 import { initSettingsModal } from "./modals/settingsModal.js";
 import { initChamCongTab, renderEmployeeSelect, renderDayEntries, updateEmpCount, onEmployeeOrDateChange } from "./tabs/chamCong.js";
 import { initLocChamCongTab, renderFilterEmployeeSelect, renderFilterResults } from "./tabs/locChamCong.js";
@@ -42,6 +43,25 @@ function onLanguageChanged() {
   onEmployeeOrDateChange();
 }
 
+// Re-render callback when user logs in or logs out
+async function onAuthStateChanged(user) {
+  if (user) {
+    await loadEmployees(onEmployeeDataChanged);
+    renderEmployeeSelect();
+    renderFilterEmployeeSelect();
+    await renderDayEntries(onTimesheetDataChanged);
+    await renderSummary();
+    if (state.filterData.isLoaded) {
+      renderFilterResults(onTimesheetDataChanged);
+    }
+  } else {
+    state.employees = [];
+    renderEmployeeSelect();
+    renderFilterEmployeeSelect();
+    renderDayEntries(onTimesheetDataChanged);
+  }
+}
+
 // Tabs Navigation Switcher
 function initTabNavigation() {
   const tabButtons = document.querySelectorAll(".tab-btn");
@@ -59,6 +79,7 @@ function initTabNavigation() {
 
       if (tabName === "tong-hop") renderSummary();
       if (tabName === "cham-cong") renderDayEntries(onTimesheetDataChanged);
+      if (tabName === "nhan-vien") renderEmployeeList(onEmployeeDataChanged);
     });
   });
 }
@@ -76,16 +97,13 @@ function initLanguageSwitcher() {
 // App Initialization
 (async function init() {
   try {
-    const onAdminStateChange = () => {
-      renderDayEntries(onTimesheetDataChanged);
-      if (state.filterData.isLoaded) {
-        renderFilterResults(onTimesheetDataChanged);
-      }
-    };
-
     initTabNavigation();
     initLanguageSwitcher();
-    initAdminAuth(onAdminStateChange);
+    initLoginGate(async (user) => {
+      updateTopbarUserUI(onAuthStateChanged);
+      await onAuthStateChanged(user);
+    });
+    initAdminAuth(onAuthStateChanged);
     initSettingsModal();
     initChamCongTab(onTimesheetDataChanged);
     initLocChamCongTab(onTimesheetDataChanged);
@@ -93,10 +111,7 @@ function initLanguageSwitcher() {
     initTongHopTab();
 
     setLanguage(currentLang, { onLanguageChange: onLanguageChanged });
-    await checkAdminStatus(onAdminStateChange);
-    await loadEmployees(onEmployeeDataChanged);
-    await renderDayEntries(onTimesheetDataChanged);
-    await renderSummary();
+    await checkAuthStatus(onAuthStateChanged);
   } catch (err) {
     console.error("Initialization error:", err);
   }

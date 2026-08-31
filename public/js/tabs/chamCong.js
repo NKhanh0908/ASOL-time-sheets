@@ -5,7 +5,9 @@ import { todayStr, monthKeyOf, timeToMinutes, hoursBetween, fmtHours, weekdayLab
 import { showToast, setBtnLoading, renderPagination } from "../utils/ui.js";
 
 export function empName(id) {
-  return state.employees.find((e) => e.id === id)?.name || t("deletedEmp");
+  const emp = state.employees.find((e) => e.id === id);
+  if (!emp) return t("deletedEmp");
+  return emp.code ? `[${emp.code}] ${emp.name}` : emp.name;
 }
 
 export function updateEmpCount() {
@@ -24,12 +26,21 @@ export async function ensureMonthLoaded(mk) {
 export function renderEmployeeSelect() {
   const empSelect = document.getElementById("empSelect");
   if (!empSelect) return;
+
+  if (!state.isAdmin && state.currentUser) {
+    empSelect.innerHTML = `<option value="${state.currentUser.id}">[${state.currentUser.code}] ${state.currentUser.name}</option>`;
+    empSelect.value = state.currentUser.id;
+    empSelect.disabled = true;
+    return;
+  }
+
+  empSelect.disabled = false;
   const keep = empSelect.value;
   empSelect.innerHTML = `<option value="">${t("selectEmployee")}</option>`;
   state.employees.forEach((e) => {
     const opt = document.createElement("option");
     opt.value = e.id;
-    opt.textContent = e.name;
+    opt.textContent = e.code ? `[${e.code}] ${e.name}` : e.name;
     empSelect.appendChild(opt);
   });
   empSelect.value = keep;
