@@ -1217,51 +1217,29 @@ body:not(.is-admin) .admin-only {
 }
 
 /* Employee Tab Grid & List Styles */
+/* Employee Tab Grid & List Styles */
 .emp-form {
   display: flex;
-  flex-direction: column;
   gap: 8px;
   margin-bottom: 20px;
-  background: white;
-  padding: 14px;
-  border: 1px solid var(--line);
-  border-radius: 8px;
+  flex-wrap: wrap;
+  align-items: center;
 }
 
-.emp-form-grid {
-  display: grid;
-  grid-template-columns: 110px 1fr 200px;
-  gap: 12px;
-  align-items: flex-end;
-}
-
-.emp-field {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-}
-
-.emp-field label {
-  font-family: var(--font-display);
-  font-size: 12px;
-  font-weight: 600;
-  color: var(--ink);
-}
-
-.emp-field input {
-  padding: 8px 10px;
+.emp-form input {
+  flex: 1;
+  min-width: 140px;
+  padding: 8px 12px;
   border: 1px solid var(--line);
   border-radius: 5px;
   font-size: 13px;
+  background: white;
+  box-sizing: border-box;
 }
 
-.pass-input-row {
-  display: flex;
-  gap: 4px;
-}
-
-.pass-input-row input {
-  flex: 1;
+.emp-form input:focus {
+  outline: none;
+  border-color: var(--ink);
 }
 
 .emp-row {
@@ -1272,6 +1250,7 @@ body:not(.is-admin) .admin-only {
   background: white;
   border: 1px solid var(--line);
   border-radius: 6px;
+  box-sizing: border-box;
 }
 
 .emp-row-info {
@@ -1295,6 +1274,7 @@ body:not(.is-admin) .admin-only {
   .summary-row { grid-template-columns: 1.5fr 1fr 1fr 0.8fr; font-size: 12px; }
   .filter-grid { grid-template-columns: 1fr; }
   .kpi-grid { grid-template-columns: 1fr; }
-  .emp-form-grid { grid-template-columns: 1fr; }
+  .emp-form { flex-direction: column; align-items: stretch; }
+  .emp-form input { max-width: 100% !important; }
   .hide-mobile { display: none; }
 }

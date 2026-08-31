@@ -55,64 +55,48 @@
 
         <form id="entryForm" class="entry-form">
           <input type="hidden" id="entryIdInput" value="" />
-          
-          <div class="form-row-2col">
-            <div class="form-field">
-              <label for="empSelect" data-i18n="selectEmployee">Chọn nhân viên:</label>
-              <select id="empSelect" required>
-                <option value="" data-i18n="selectEmployee">Chọn nhân viên</option>
-              </select>
-            </div>
-
-            <div class="form-field">
-              <label for="modeSelect" data-i18n="filterLabelMode">Hình thức:</label>
-              <select id="modeSelect">
-                <option value="Onsite" data-i18n="modeOnsite">Onsite</option>
-                <option value="Remote" data-i18n="modeRemote">Remote</option>
-                <option value="Nghỉ" data-i18n="modeOff">Nghỉ</option>
-              </select>
-            </div>
+          <div class="form-row main-fields">
+            <select id="empSelect" required>
+              <option value="" data-i18n="selectEmployee">Nhân viên</option>
+            </select>
+            <select id="modeSelect">
+              <option value="Onsite">Onsite</option>
+              <option value="Remote">Remote</option>
+              <option value="Nghỉ" data-i18n="modeOff">Nghỉ</option>
+            </select>
           </div>
 
-          <div class="time-grid" id="timeGrid">
-            <div class="time-field-block">
+          <div class="time-grid-simple" id="timeGrid">
+            <div class="time-field">
               <label for="inTime" data-i18n="labelInTime">Giờ vào (Sáng)</label>
               <div class="time-input-wrap">
                 <input type="time" id="inTime" />
-                <button type="button" class="btn-now" data-target="inTime" title="Điền giờ hiện tại">
-                  <img src="assets/svg/fill.svg" class="icon-svg" alt="" />
-                </button>
+                <button type="button" class="btn-now" data-target="inTime" title="Điền giờ hiện tại"><img src="assets/svg/fill.svg" class="icon-svg" alt="" /></button>
               </div>
             </div>
 
-            <div class="time-field-block">
+            <div class="time-field">
               <label for="outTime" data-i18n="labelOutTime">Giờ ra (Chiều)</label>
               <div class="time-input-wrap">
                 <input type="time" id="outTime" />
-                <button type="button" class="btn-now" data-target="outTime" title="Điền giờ hiện tại">
-                  <img src="assets/svg/fill.svg" class="icon-svg" alt="" />
-                </button>
+                <button type="button" class="btn-now" data-target="outTime" title="Điền giờ hiện tại"><img src="assets/svg/fill.svg" class="icon-svg" alt="" /></button>
               </div>
             </div>
           </div>
 
-          <div class="form-field full-width">
-            <textarea
+          <div class="form-row note-row">
+            <input
+              type="text"
               id="noteInput"
-              rows="2"
+              class="full-width note-input"
               placeholder="Công việc hôm nay làm: ..."
               required
               data-i18n-ph="placeholderTask"
-            ></textarea>
-          </div>
-
-          <div class="form-actions">
-            <button type="button" id="btnResetForm" class="btn-sub" style="display:none;">
-              <span data-i18n="btnCancel">Huỷ</span>
-            </button>
-            <button type="submit" id="btnSubmitEntry" class="btn-primary">
-              <span data-i18n="btnCheckin">⚡ Điểm danh Vào</span>
-            </button>
+            />
+            <div class="btn-actions">
+              <button type="button" id="btnResetForm" class="btn-sub" style="display:none;"><img src="assets/svg/reset.svg" class="icon-svg" alt="" /><span data-i18n="btnCancel">Huỷ</span></button>
+              <button type="submit" id="btnSubmitEntry" class="btn-primary" data-i18n="btnCheckin">⚡ Điểm danh Vào</button>
+            </div>
           </div>
         </form>
 
@@ -177,26 +161,10 @@
       <!-- 3. TAB NHAN VIEN (Admin Only) -->
       <section id="tab-nhan-vien" class="tab-content admin-only">
         <form id="empForm" class="emp-form">
-          <div class="emp-form-grid">
-            <div class="emp-field">
-              <label for="inputEmpCode" data-i18n="labelEmpCodeInput">Mã NV:</label>
-              <input type="text" id="inputEmpCode" placeholder="Tự động (NV..)" style="text-transform: uppercase;" />
-            </div>
-            <div class="emp-field emp-field-grow">
-              <label for="newEmpName" data-i18n="placeholderNewEmp">Họ và Tên:</label>
-              <input type="text" id="newEmpName" placeholder="Tên nhân viên mới" required data-i18n-ph="placeholderNewEmp" />
-            </div>
-            <div class="emp-field">
-              <label for="inputEmpPass" data-i18n="labelEmpPassInput">Mật khẩu khởi tạo:</label>
-              <div class="pass-input-row">
-                <input type="text" id="inputEmpPass" placeholder="Tự động sinh nếu trống" data-i18n-ph="phEmpPassInput" />
-                <button type="button" id="btnRandomEmpPass" class="btn-sub btn-sm" title="Sinh mật khẩu ngẫu nhiên">🎲</button>
-              </div>
-            </div>
-          </div>
-          <div class="form-actions" style="margin-top: 10px;">
-            <button type="submit" id="btnAddEmpSubmit" class="btn-primary" data-i18n="btnAddEmp">+ Thêm nhân viên</button>
-          </div>
+          <input type="text" id="inputEmpCode" placeholder="Mã NV (tự động nếu trống)" style="max-width: 140px; text-transform: uppercase;" data-i18n-ph="phEmployeeCode" />
+          <input type="text" id="newEmpName" placeholder="Tên nhân viên mới" required data-i18n-ph="placeholderNewEmp" />
+          <input type="text" id="inputEmpPass" placeholder="Mật khẩu khởi tạo (tự động nếu trống)" style="max-width: 220px;" data-i18n-ph="phEmpPassInput" />
+          <button type="submit" id="btnAddEmpSubmit" class="btn-primary" data-i18n="btnAddEmp">+ Thêm</button>
         </form>
         <div id="empList" class="emp-list"></div>
       </section>

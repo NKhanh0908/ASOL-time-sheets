@@ -393,6 +393,8 @@ const db = {
 };
 
 app.use(express.json());
+app.use("/assets", express.static(path.join(__dirname, "public", "assets")));
+app.use("/assets", express.static(path.join(__dirname, "assets")));
 app.use(express.static(path.join(__dirname, "public")));
 
 // ---------- Authentication Endpoints ----------
