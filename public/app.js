@@ -15,8 +15,8 @@ const state = {
 // ---------- i18n Dictionary ----------
 const dict = {
   vi: {
-    eyebrow: "LEDGER · NỘI BỘ",
-    appTitle: "Bảng Chấm Công",
+    eyebrow: "ALPACA SOLUTIONS",
+    appTitle: "Bảng làm việc Intern",
     tabChamCong: "Chấm công",
     tabLocChamCong: "Lọc chấm công",
     tabNhanVien: "Nhân viên",
@@ -52,7 +52,7 @@ const dict = {
     deletedEmp: "(đã xoá)",
     errMissingFields: "Vui lòng chọn nhân viên và nhập đầy đủ thông tin!",
     errNoteEmpty: "Ghi chú không được để trống!",
-    footerNote: "Dữ liệu lưu trên server nội bộ — mọi người trong team dùng chung một bảng.",
+    footerNote: "Ghi nhận thời gian làm việc của thực tập sinh tại ASOL",
     daysOfWeek: ["CN", "Th 2", "Th 3", "Th 4", "Th 5", "Th 6", "Th 7"],
     monthPrefix: "Tháng",
     adminLogin: "Admin",
@@ -91,8 +91,8 @@ const dict = {
     entryUpdated: "Cập nhật chấm công thành công",
   },
   en: {
-    eyebrow: "LEDGER · INTERNAL",
-    appTitle: "Timesheet App",
+    eyebrow: "ALPACA SOLUTIONS",
+    appTitle: "Intern Timesheet",
     tabChamCong: "Timesheet",
     tabLocChamCong: "Filter & Search",
     tabNhanVien: "Employees",
@@ -128,7 +128,7 @@ const dict = {
     deletedEmp: "(deleted)",
     errMissingFields: "Please select an employee and fill all required fields!",
     errNoteEmpty: "Note cannot be empty!",
-    footerNote: "Data saved on internal server — shared across the team.",
+    footerNote: "Recording working hours of interns at ASOL",
     daysOfWeek: ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"],
     monthPrefix: "Month",
     adminLogin: "Admin",

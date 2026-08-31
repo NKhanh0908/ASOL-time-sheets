@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>Bảng Chấm Công</title>
+<title>Bảng làm việc Intern</title>
 <link rel="icon" type="image/png" href="assets/Logo_Full.png" />
 <link rel="stylesheet" href="styles.css" />
 </head>
@@ -13,8 +13,8 @@
       <div class="topbar-left">
         <img src="assets/Logo_Full.png" alt="Logo" class="app-logo" />
         <div class="brand-info">
-          <div class="eyebrow" data-i18n="eyebrow">LEDGER · NỘI BỘ</div>
-          <h1 data-i18n="appTitle">Bảng Chấm Công</h1>
+          <div class="eyebrow" data-i18n="eyebrow">ALPACA SOLUTIONS</div>
+          <h1 data-i18n="appTitle">Bảng làm việc Intern</h1>
         </div>
       </div>
       <div class="topbar-right">
@@ -73,7 +73,7 @@
               <label for="inTime" data-i18n="labelInTime">Giờ vào (Sáng)</label>
               <div class="time-input-wrap">
                 <input type="time" id="inTime" />
-                <button type="button" class="btn-now" data-target="inTime" title="Điền giờ hiện tại">⚡</button>
+                <button type="button" class="btn-now" data-target="inTime" title="Điền giờ hiện tại"><img src="assets/svg/fill.svg" class="icon-svg" alt="Fill" /></button>
               </div>
             </div>
 
@@ -81,7 +81,7 @@
               <label for="outTime" data-i18n="labelOutTime">Giờ ra (Chiều)</label>
               <div class="time-input-wrap">
                 <input type="time" id="outTime" />
-                <button type="button" class="btn-now" data-target="outTime" title="Điền giờ hiện tại">⚡</button>
+                <button type="button" class="btn-now" data-target="outTime" title="Điền giờ hiện tại"><img src="assets/svg/fill.svg" class="icon-svg" alt="Fill" /></button>
               </div>
             </div>
           </div>
@@ -95,7 +95,7 @@
               required
             />
             <div class="btn-actions">
-              <button type="button" id="btnResetForm" class="btn-sub" style="display:none;" data-i18n="btnCancel">Huỷ</button>
+              <button type="button" id="btnResetForm" class="btn-sub" style="display:none;"><img src="assets/svg/reset.svg" class="icon-svg" alt="" /><span data-i18n="btnCancel">Huỷ</span></button>
               <button type="submit" id="btnSubmitEntry" class="btn-primary" data-i18n="btnRecord">+ Ghi nhận</button>
             </div>
           </div>
@@ -134,8 +134,8 @@
             </div>
           </div>
           <div class="filter-actions">
-            <button type="button" id="btnResetFilter" class="btn-sub" data-i18n="btnResetFilter">🔄 Đặt lại</button>
-            <button type="submit" id="btnApplyFilter" class="btn-primary" data-i18n="btnApplyFilter">🔍 Lọc dữ liệu</button>
+            <button type="button" id="btnResetFilter" class="btn-sub"><img src="assets/svg/reset.svg" class="icon-svg" alt="" /><span data-i18n="btnResetFilter">Đặt lại</span></button>
+            <button type="submit" id="btnApplyFilter" class="btn-primary"><img src="assets/svg/filter.svg" class="icon-svg icon-white" alt="" /><span data-i18n="btnApplyFilter">Lọc dữ liệu</span></button>
           </div>
         </form>
 
@@ -178,7 +178,7 @@
       </section>
     </main>
 
-    <footer class="footnote" data-i18n="footerNote">Dữ liệu lưu trên server nội bộ — mọi người trong team dùng chung một bảng.</footer>
+    <footer class="footnote" data-i18n="footerNote">Ghi nhận thời gian làm việc của thực tập sinh tại ASOL</footer>
   </div>
 
   <!-- MODALS -->
@@ -237,6 +237,6 @@
   <!-- Toast Notification Container -->
   <div id="toastContainer" class="toast-container"></div>
 
-  <script src="app.js"></script>
+  <script type="module" src="js/main.js"></script>
 </body>
 </html>
