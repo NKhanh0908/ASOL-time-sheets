@@ -443,24 +443,58 @@ async function sendGoogleSheetWebhook(payload, customUrl = null) {
       targetUrl = config.webhookUrl;
     }
 
+    if (!targetUrl.startsWith("http://") && !targetUrl.startsWith("https://")) {
+      return { success: false, error: "URL không hợp lệ. Vui lòng nhập URL bắt đầu bằng https://" };
+    }
+
     const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), 5000);
+    const timeout = setTimeout(() => controller.abort(), 10000);
 
     const res = await fetch(targetUrl, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(payload),
+      redirect: "follow",
       signal: controller.signal,
     });
     clearTimeout(timeout);
 
-    if (!res.ok) {
-      const text = await res.text().catch(() => "");
-      return { success: false, status: res.status, error: text || `HTTP ${res.status}` };
+    const rawText = await res.text().catch(() => "");
+    let data = null;
+    try {
+      data = JSON.parse(rawText);
+    } catch {
+      // Not JSON response
     }
-    const data = await res.json().catch(() => ({ status: "success" }));
-    return { success: true, data };
+
+    if (!res.ok) {
+      if (rawText.includes("<title>Không tìm thấy trang</title>") || rawText.includes("404")) {
+        return {
+          success: false,
+          status: res.status,
+          error: "URL không tìm thấy (404). Vui lòng kiểm tra lại URL Triển khai Web App (phải kết thúc bằng /exec).",
+        };
+      }
+      if (rawText.includes("accounts.google.com") || rawText.includes("Sign in")) {
+        return {
+          success: false,
+          status: res.status,
+          error: "Quyền truy cập bị từ chối. Hãy chắc chắn khi Deploy Web App, mục 'Ai có quyền truy cập' đã chọn 'Bất kỳ ai' (Anyone).",
+        };
+      }
+      const cleanError = rawText.length > 150 ? `Lỗi máy chủ Google (${res.status})` : rawText;
+      return { success: false, status: res.status, error: cleanError || `HTTP ${res.status}` };
+    }
+
+    if (data && data.status === "error") {
+      return { success: false, error: data.message || "Lỗi xử lý từ Google Apps Script" };
+    }
+
+    return { success: true, data: data || { status: "success" } };
   } catch (err) {
+    if (err.name === "AbortError") {
+      return { success: false, error: "Hết thời gian chờ kết nối đến Google Sheet (Timeout 10s)" };
+    }
     return { success: false, error: err.message };
   }
 }
