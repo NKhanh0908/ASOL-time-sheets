@@ -124,6 +124,32 @@ function runTest() {
   assert.strictEqual(applyFilters(sampleEntries, { employeeId: "emp-1", mode: "Remote" }).length, 1);
   assert.strictEqual(applyFilters(sampleEntries, { startDate: "2026-08-05", endDate: "2026-08-25" }).length, 2);
 
+  // 6. Test duplicate completed entry logic
+  console.log("Testing rejection of duplicate entry when already completed...");
+  const checkDuplicate = (existing, newPayload) => {
+    if (!existing) return { allowed: true };
+    const isCompleted = (existing.in && existing.out) || existing.mode === "Nghỉ" || existing.mode === "Off";
+    if (isCompleted) {
+      return { allowed: false, error: "Nhân viên này đã hoàn thành chấm công trong ngày hôm nay!" };
+    }
+    if (existing.in && !existing.out && newPayload.out) {
+      return { allowed: true, isUpdate: true };
+    }
+    return { allowed: false, error: "Nhân viên này đã điểm danh vào rồi!" };
+  };
+
+  const completedEntry = { date: "2026-08-31", employeeId: "emp-1", in: "08:30", out: "17:30", mode: "Onsite" };
+  const resDup1 = checkDuplicate(completedEntry, { in: "09:00", out: "18:00" });
+  assert.strictEqual(resDup1.allowed, false, "Should reject new entry when already completed");
+
+  const leaveEntry = { date: "2026-08-31", employeeId: "emp-2", mode: "Nghỉ" };
+  const resDup2 = checkDuplicate(leaveEntry, { in: "08:30", out: "17:30" });
+  assert.strictEqual(resDup2.allowed, false, "Should reject new entry when already marked Off");
+
+  const inProgressEntry = { date: "2026-08-31", employeeId: "emp-3", in: "08:30", out: "" };
+  const resDup3 = checkDuplicate(inProgressEntry, { out: "17:30" });
+  assert.strictEqual(resDup3.allowed, true, "Should allow updating out time for in-progress entry");
+
   console.log("All backend validation and auth tests passed successfully!");
 }
 

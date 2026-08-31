@@ -160,11 +160,12 @@ const db = {
   },
 
   async getEntries(filters = {}) {
-    const { month, employeeId, startDate, endDate, mode } =
+    const { month, employeeId, startDate, endDate, mode, date } =
       typeof filters === "string" ? { month: filters } : filters;
 
     if (isSupabase) {
       let query = supabase.from("entries").select("*").order("date", { ascending: false });
+      if (date) query = query.eq("date", date);
       if (month) query = query.like("date", `${month}%`);
       if (employeeId) query = query.eq("employee_id", employeeId);
       if (startDate) query = query.gte("date", startDate);
@@ -185,6 +186,7 @@ const db = {
     }
 
     let entries = loadLocalDB().entries;
+    if (date) entries = entries.filter((e) => e.date === date);
     if (month) entries = entries.filter((e) => e.date.startsWith(month));
     if (employeeId) entries = entries.filter((e) => e.employeeId === employeeId);
     if (startDate) entries = entries.filter((e) => e.date >= startDate);
@@ -380,16 +382,37 @@ app.post("/api/entries", async (req, res) => {
   if (!date || !employeeId || !mode || !trimmedNote) {
     return res.status(400).json({ error: "Thiếu ngày, nhân viên, hình thức hoặc ghi chú" });
   }
-  const entry = {
-    id: crypto.randomUUID(),
-    date,
-    employeeId,
-    in: timeIn || "",
-    out: out || "",
-    mode,
-    note: trimmedNote,
-  };
+
   try {
+    const existingList = await db.getEntries({ date, employeeId });
+    const existing = existingList.find((e) => e.date === date && e.employeeId === employeeId);
+    if (existing) {
+      const isCompleted = (existing.in && existing.out) || existing.mode === "Nghỉ" || existing.mode === "Off";
+      if (isCompleted) {
+        return res.status(400).json({ error: "Nhân viên này đã hoàn thành chấm công trong ngày hôm nay!" });
+      }
+      // Nếu đã có in mà chưa có out, và gửi lên có out -> tự động cập nhật bản ghi
+      if (existing.in && !existing.out && (out || timeIn)) {
+        const patch = {
+          out: out || timeIn,
+          mode: mode || existing.mode,
+          note: trimmedNote || existing.note,
+        };
+        const updated = await db.updateEntry(existing.id, patch);
+        return res.json(updated);
+      }
+      return res.status(400).json({ error: "Nhân viên này đã điểm danh vào rồi!" });
+    }
+
+    const entry = {
+      id: crypto.randomUUID(),
+      date,
+      employeeId,
+      in: timeIn || "",
+      out: out || "",
+      mode,
+      note: trimmedNote,
+    };
     const saved = await db.createEntry(entry);
     res.json(saved);
   } catch (err) {
