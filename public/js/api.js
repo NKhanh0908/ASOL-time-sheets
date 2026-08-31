@@ -88,3 +88,29 @@ export async function changeAdminPassword(currentPassword, newPassword) {
     body: JSON.stringify({ currentPassword, newPassword }),
   });
 }
+
+// Settings & Sync API
+export async function fetchSettings() {
+  return api("/api/settings");
+}
+
+export async function updateSettings(settings) {
+  return api("/api/settings", {
+    method: "POST",
+    body: JSON.stringify(settings),
+  });
+}
+
+export async function testSyncConnection(url) {
+  return api("/api/sync/test", {
+    method: "POST",
+    body: JSON.stringify({ url }),
+  });
+}
+
+export async function syncMonthToGoogleSheets(month) {
+  return api("/api/sync/month", {
+    method: "POST",
+    body: JSON.stringify({ month }),
+  });
+}
