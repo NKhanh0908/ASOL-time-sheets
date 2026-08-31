@@ -1,7 +1,7 @@
 import { state } from "./state.js";
 
 function getAuthHeaders() {
-  const token = state.adminToken || localStorage.getItem("timesheet_admin_token");
+  const token = state.token || localStorage.getItem("asol_auth_token") || localStorage.getItem("timesheet_admin_token");
   return token ? { Authorization: `Bearer ${token}` } : {};
 }
 
@@ -15,20 +15,62 @@ export async function api(path, opts = {}) {
   const res = await fetch(path, { ...opts, headers });
   if (!res.ok) {
     const body = await res.json().catch(() => ({}));
-    throw new Error(body.error || `Lỗi máy chủ (${res.status})`);
+    const error = new Error(body.error || `Lỗi máy chủ (${res.status})`);
+    error.status = res.status;
+    throw error;
   }
   return res.json();
 }
 
-// Employees API
+// ---------- Authentication API ----------
+export async function loginUser(credentials) {
+  return api("/api/auth/login", {
+    method: "POST",
+    body: JSON.stringify(credentials),
+  });
+}
+
+export async function getMe() {
+  return api("/api/auth/me");
+}
+
+export async function changePassword(currentPassword, newPassword) {
+  return api("/api/auth/change-password", {
+    method: "POST",
+    body: JSON.stringify({ currentPassword, newPassword }),
+  });
+}
+
+// Backward compatible Admin Auth methods
+export async function loginAdmin(password) {
+  return loginUser({ role: "admin", password });
+}
+
+export async function getAdminStatus() {
+  return api("/api/admin/status");
+}
+
+export async function changeAdminPassword(currentPassword, newPassword) {
+  return changePassword(currentPassword, newPassword);
+}
+
+// ---------- Employees API ----------
 export async function fetchEmployees() {
   return api("/api/employees");
 }
 
-export async function createEmployee(name) {
+export async function createEmployee(data) {
+  const body = typeof data === "string" ? { name: data } : data;
   return api("/api/employees", {
     method: "POST",
-    body: JSON.stringify({ name }),
+    body: JSON.stringify(body),
+  });
+}
+
+export async function resetEmployeePassword(id, newPassword = "") {
+  return api(`/api/employees/${id}/reset-password`, {
+    method: "POST",
+    body: JSON.stringify({ newPassword }),
   });
 }
 
@@ -36,7 +78,7 @@ export async function deleteEmployee(id) {
   return api(`/api/employees/${id}`, { method: "DELETE" });
 }
 
-// Entries API
+// ---------- Entries API ----------
 export async function fetchEntries(filters = {}) {
   const params = new URLSearchParams();
   if (typeof filters === "string") {
@@ -47,6 +89,7 @@ export async function fetchEntries(filters = {}) {
     if (filters.startDate) params.set("startDate", filters.startDate);
     if (filters.endDate) params.set("endDate", filters.endDate);
     if (filters.mode) params.set("mode", filters.mode);
+    if (filters.date) params.set("date", filters.date);
   }
   const qs = params.toString();
   return api(`/api/entries${qs ? `?${qs}` : ""}`);
@@ -70,26 +113,7 @@ export async function deleteEntry(id) {
   return api(`/api/entries/${id}`, { method: "DELETE" });
 }
 
-// Admin Auth API
-export async function loginAdmin(password) {
-  return api("/api/admin/login", {
-    method: "POST",
-    body: JSON.stringify({ password }),
-  });
-}
-
-export async function getAdminStatus() {
-  return api("/api/admin/status");
-}
-
-export async function changeAdminPassword(currentPassword, newPassword) {
-  return api("/api/admin/change-password", {
-    method: "POST",
-    body: JSON.stringify({ currentPassword, newPassword }),
-  });
-}
-
-// Settings & Sync API
+// ---------- Settings & Sync API ----------
 export async function fetchSettings() {
   return api("/api/settings");
 }

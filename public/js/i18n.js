@@ -46,7 +46,7 @@ export const dict = {
     modalLoginTitle: "Đăng nhập Quản trị viên (Admin)",
     labelAdminPass: "Mật khẩu Admin:",
     btnSubmitLogin: "Đăng nhập",
-    modalChangePassTitle: "Đổi mật khẩu Admin",
+    modalChangePassTitle: "Đổi mật khẩu",
     labelCurrentPass: "Mật khẩu hiện tại:",
     labelNewPass: "Mật khẩu mới (tối thiểu 6 ký tự):",
     labelConfirmPass: "Xác nhận mật khẩu mới:",
@@ -62,9 +62,9 @@ export const dict = {
     kpiTotalDays: "Tổng số công",
     kpiTotalHours: "Tổng giờ làm",
     kpiBreakdown: "Phân loại",
-    loginSuccess: "Đăng nhập Admin thành công!",
-    logoutSuccess: "Đã đăng xuất tài khoản Admin",
-    passChangedSuccess: "Đổi mật khẩu Admin thành công!",
+    loginSuccess: "Đăng nhập thành công!",
+    logoutSuccess: "Đã đăng xuất tài khoản",
+    passChangedSuccess: "Đổi mật khẩu thành công!",
     passMismatch: "Mật khẩu xác nhận không khớp!",
     passTooShort: "Mật khẩu mới phải có ít nhất 6 ký tự!",
     confirmDeleteEntry: "Bạn có chắc muốn xoá bản ghi chấm công này?",
@@ -94,6 +94,30 @@ export const dict = {
     settingsSaved: "Đã lưu cài đặt thành công!",
     syncingMonth: "Đang đồng bộ dữ liệu tháng...",
     syncMonthSuccess: "Đồng bộ Google Sheet thành công!",
+
+    // Auth & Scoped Keys
+    loginGateTitle: "Đăng nhập Hệ thống Chấm công",
+    tabLoginEmployee: "👤 Nhân viên",
+    tabLoginAdmin: "👑 Quản trị viên",
+    labelEmployeeCode: "Mã nhân viên:",
+    phEmployeeCode: "Ví dụ: NV01",
+    labelEmployeePassword: "Mật khẩu:",
+    phEmployeePassword: "Nhập mật khẩu...",
+    btnLoginSubmit: "Đăng nhập",
+    forgotPasswordLink: "Quên mật khẩu?",
+    forgotPasswordInfo: "Vui lòng liên hệ Quản trị viên (Admin) của ASOL để được cấp lại mật khẩu.",
+    btnGeneratePassword: "🎲 Tạo ngẫu nhiên",
+    btnResetPassword: "Đặt lại MK",
+    colEmployeeCode: "Mã NV",
+    labelEmpCodeInput: "Mã NV:",
+    labelEmpPassInput: "Mật khẩu khởi tạo:",
+    phEmpPassInput: "Để trống để tự tạo ngẫu nhiên",
+    resetPasswordSuccess: "Mật khẩu mới của {name} là: {pass}",
+    errInvalidCodeOrPass: "Mã nhân viên hoặc mật khẩu không chính xác!",
+    errDuplicateCode: "Mã nhân viên này đã tồn tại!",
+    modalResetPassTitle: "Đặt lại mật khẩu nhân viên",
+    btnConfirmReset: "Xác nhận đặt lại",
+    promptNewPassOptional: "Mật khẩu mới (để trống để tự sinh ngẫu nhiên):",
   },
   en: {
     eyebrow: "ALPACA SOLUTIONS",
@@ -142,7 +166,7 @@ export const dict = {
     modalLoginTitle: "Administrator Login",
     labelAdminPass: "Admin Password:",
     btnSubmitLogin: "Login",
-    modalChangePassTitle: "Change Admin Password",
+    modalChangePassTitle: "Change Password",
     labelCurrentPass: "Current Password:",
     labelNewPass: "New Password (min 6 chars):",
     labelConfirmPass: "Confirm New Password:",
@@ -158,9 +182,9 @@ export const dict = {
     kpiTotalDays: "Total Days",
     kpiTotalHours: "Total Hours",
     kpiBreakdown: "Breakdown",
-    loginSuccess: "Admin login successful!",
-    logoutSuccess: "Logged out from Admin",
-    passChangedSuccess: "Admin password updated successfully!",
+    loginSuccess: "Login successful!",
+    logoutSuccess: "Logged out",
+    passChangedSuccess: "Password updated successfully!",
     passMismatch: "Password confirmation does not match!",
     passTooShort: "New password must be at least 6 characters!",
     confirmDeleteEntry: "Are you sure you want to delete this timesheet entry?",
@@ -190,13 +214,43 @@ export const dict = {
     settingsSaved: "Settings saved successfully!",
     syncingMonth: "Syncing month data...",
     syncMonthSuccess: "Google Sheet synced successfully!",
+
+    // Auth & Scoped Keys
+    loginGateTitle: "Timesheet System Login",
+    tabLoginEmployee: "👤 Employee",
+    tabLoginAdmin: "👑 Administrator",
+    labelEmployeeCode: "Employee Code:",
+    phEmployeeCode: "e.g. NV01",
+    labelEmployeePassword: "Password:",
+    phEmployeePassword: "Enter password...",
+    btnLoginSubmit: "Log In",
+    forgotPasswordLink: "Forgot password?",
+    forgotPasswordInfo: "Please contact your ASOL Administrator to reset your password.",
+    btnGeneratePassword: "🎲 Generate Random",
+    btnResetPassword: "Reset PW",
+    colEmployeeCode: "Code",
+    labelEmpCodeInput: "Code:",
+    labelEmpPassInput: "Initial Password:",
+    phEmpPassInput: "Leave blank for random password",
+    resetPasswordSuccess: "New password for {name} is: {pass}",
+    errInvalidCodeOrPass: "Invalid employee code or password!",
+    errDuplicateCode: "This employee code already exists!",
+    modalResetPassTitle: "Reset Employee Password",
+    btnConfirmReset: "Confirm Reset",
+    promptNewPassOptional: "New password (leave blank to generate randomly):",
   },
 };
 
 export let currentLang = localStorage.getItem("ts_lang") || "vi";
 
-export function t(key) {
-  return dict[currentLang]?.[key] || dict["vi"][key] || key;
+export function t(key, params = {}) {
+  let str = dict[currentLang]?.[key] || dict["vi"][key] || key;
+  if (typeof str === "string" && params && typeof params === "object") {
+    Object.entries(params).forEach(([k, v]) => {
+      str = str.replace(new RegExp(`\\{${k}\\}`, "g"), v);
+    });
+  }
+  return str;
 }
 
 export function setLanguage(lang, callbacks = {}) {
