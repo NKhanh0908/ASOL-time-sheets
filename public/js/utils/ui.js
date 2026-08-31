@@ -98,31 +98,184 @@ export function renderPagination(container, { currentPage, totalItems, pageSize 
     return;
   }
 
-  const totalPages = Math.ceil(totalItems / pageSize) || 1;
-  const curPage = Math.max(1, Math.min(currentPage, totalPages));
-  const from = (curPage - 1) * pageSize + 1;
-  const to = Math.min(curPage * pageSize, totalItems);
+  const totalPages = Math.ceil(totalItems / pageSize);
+  if (currentPage > totalPages) currentPage = totalPages;
+  if (currentPage < 1) currentPage = 1;
 
-  let html = `<div class="pagination-bar">`;
-  html += `<div class="pagination-info">Hiển thị ${from}-${to} / ${totalItems}</div>`;
-  html += `<div class="pagination-controls">`;
-  html += `<button type="button" class="page-btn page-prev" ${curPage <= 1 ? "disabled" : ""}>◀</button>`;
+  container.innerHTML = `
+    <button type="button" class="page-btn page-prev" ${currentPage <= 1 ? "disabled" : ""}>&laquo; Prev</button>
+    <span class="page-info mono">${currentPage} / ${totalPages} (${totalItems})</span>
+    <button type="button" class="page-btn page-next" ${currentPage >= totalPages ? "disabled" : ""}>Next &raquo;</button>
+  `;
 
-  for (let i = 1; i <= totalPages; i++) {
-    if (i === 1 || i === totalPages || (i >= curPage - 1 && i <= curPage + 1)) {
-      html += `<button type="button" class="page-btn page-num ${i === curPage ? "active" : ""}" data-page="${i}">${i}</button>`;
-    } else if (i === curPage - 2 || i === curPage + 2) {
-      html += `<span class="page-ellipsis">...</span>`;
+  const btnPrev = container.querySelector(".page-prev");
+  const btnNext = container.querySelector(".page-next");
+
+  btnPrev?.addEventListener("click", () => {
+    if (currentPage > 1 && typeof onPageChange === "function") {
+      onPageChange(currentPage - 1);
     }
-  }
+  });
 
-  html += `<button type="button" class="page-btn page-next" ${curPage >= totalPages ? "disabled" : ""}>▶</button>`;
-  html += `</div></div>`;
+  btnNext?.addEventListener("click", () => {
+    if (currentPage < totalPages && typeof onPageChange === "function") {
+      onPageChange(currentPage + 1);
+    }
+  });
+}
 
-  container.innerHTML = html;
-  container.querySelector(".page-prev")?.addEventListener("click", () => onPageChange(curPage - 1));
-  container.querySelector(".page-next")?.addEventListener("click", () => onPageChange(curPage + 1));
-  container.querySelectorAll(".page-num").forEach((btn) => {
-    btn.addEventListener("click", (e) => onPageChange(Number(e.target.dataset.page)));
+/**
+ * Custom Modal Dialog: Xác nhận (thay thế window.confirm)
+ */
+export function showConfirmDialog({ title = "Xác nhận", message = "", confirmText = "Xác nhận", cancelText = "Huỷ", isDanger = false }) {
+  return new Promise((resolve) => {
+    const backdrop = document.createElement("div");
+    backdrop.className = "modal-backdrop dialog-backdrop";
+    backdrop.innerHTML = `
+      <div class="modal-box dialog-box">
+        <div class="modal-header">
+          <h3>${title}</h3>
+          <button type="button" class="modal-close">&times;</button>
+        </div>
+        <div class="modal-body">
+          <p class="dialog-msg">${message}</p>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn-sub btn-dialog-cancel">${cancelText}</button>
+          <button type="button" class="btn-primary ${isDanger ? "btn-danger" : ""} btn-dialog-confirm">${confirmText}</button>
+        </div>
+      </div>
+    `;
+    document.body.appendChild(backdrop);
+    backdrop.style.display = "flex";
+
+    const close = (val) => {
+      backdrop.classList.add("hiding");
+      setTimeout(() => backdrop.remove(), 200);
+      resolve(val);
+    };
+
+    backdrop.querySelector(".modal-close").addEventListener("click", () => close(false));
+    backdrop.querySelector(".btn-dialog-cancel").addEventListener("click", () => close(false));
+    backdrop.querySelector(".btn-dialog-confirm").addEventListener("click", () => close(true));
+    backdrop.addEventListener("click", (e) => {
+      if (e.target === backdrop) close(false);
+    });
+  });
+}
+
+/**
+ * Custom Modal Dialog: Nhập dữ liệu (thay thế window.prompt)
+ */
+export function showPromptDialog({ title = "Nhập thông tin", label = "", placeholder = "", defaultValue = "", confirmText = "Lưu", cancelText = "Huỷ" }) {
+  return new Promise((resolve) => {
+    const backdrop = document.createElement("div");
+    backdrop.className = "modal-backdrop dialog-backdrop";
+    backdrop.innerHTML = `
+      <div class="modal-box dialog-box">
+        <form class="dialog-form">
+          <div class="modal-header">
+            <h3>${title}</h3>
+            <button type="button" class="modal-close">&times;</button>
+          </div>
+          <div class="modal-body">
+            <div class="modal-field">
+              ${label ? `<label>${label}</label>` : ""}
+              <input type="text" class="dialog-input" placeholder="${placeholder}" value="${defaultValue}" />
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn-sub btn-dialog-cancel">${cancelText}</button>
+            <button type="submit" class="btn-primary btn-dialog-confirm">${confirmText}</button>
+          </div>
+        </form>
+      </div>
+    `;
+    document.body.appendChild(backdrop);
+    backdrop.style.display = "flex";
+
+    const input = backdrop.querySelector(".dialog-input");
+    setTimeout(() => input?.focus(), 50);
+
+    const close = (val) => {
+      backdrop.classList.add("hiding");
+      setTimeout(() => backdrop.remove(), 200);
+      resolve(val);
+    };
+
+    backdrop.querySelector(".modal-close").addEventListener("click", () => close(null));
+    backdrop.querySelector(".btn-dialog-cancel").addEventListener("click", () => close(null));
+    backdrop.querySelector(".dialog-form").addEventListener("submit", (e) => {
+      e.preventDefault();
+      close(input.value);
+    });
+    backdrop.addEventListener("click", (e) => {
+      if (e.target === backdrop) close(null);
+    });
+  });
+}
+
+/**
+ * Custom Modal Dialog: Thông báo thông tin / Cấp mật khẩu (thay thế window.alert)
+ */
+export function showInfoDialog({ title = "Thông báo", message = "", copyValue = null, closeText = "Đóng" }) {
+  return new Promise((resolve) => {
+    const backdrop = document.createElement("div");
+    backdrop.className = "modal-backdrop dialog-backdrop";
+    backdrop.innerHTML = `
+      <div class="modal-box dialog-box">
+        <div class="modal-header">
+          <h3>${title}</h3>
+          <button type="button" class="modal-close">&times;</button>
+        </div>
+        <div class="modal-body">
+          <p class="dialog-msg">${message}</p>
+          ${
+            copyValue
+              ? `
+            <div class="dialog-copy-box">
+              <input type="text" readonly value="${copyValue}" class="dialog-copy-input mono" />
+              <button type="button" class="btn-sub btn-sm btn-copy-val">📋 Sao chép</button>
+            </div>
+          `
+              : ""
+          }
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn-primary btn-dialog-close">${closeText}</button>
+        </div>
+      </div>
+    `;
+    document.body.appendChild(backdrop);
+    backdrop.style.display = "flex";
+
+    const close = () => {
+      backdrop.classList.add("hiding");
+      setTimeout(() => backdrop.remove(), 200);
+      resolve(true);
+    };
+
+    const copyBtn = backdrop.querySelector(".btn-copy-val");
+    if (copyBtn && copyValue) {
+      copyBtn.addEventListener("click", async () => {
+        try {
+          await navigator.clipboard.writeText(copyValue);
+          copyBtn.textContent = "✓ Đã sao chép";
+          setTimeout(() => (copyBtn.textContent = "📋 Sao chép"), 2000);
+        } catch {
+          const copyInput = backdrop.querySelector(".dialog-copy-input");
+          copyInput?.select();
+          document.execCommand("copy");
+          copyBtn.textContent = "✓ Đã sao chép";
+          setTimeout(() => (copyBtn.textContent = "📋 Sao chép"), 2000);
+        }
+      });
+    }
+
+    backdrop.querySelector(".modal-close").addEventListener("click", close);
+    backdrop.querySelector(".btn-dialog-close").addEventListener("click", close);
+    backdrop.addEventListener("click", (e) => {
+      if (e.target === backdrop) close();
+    });
   });
 }

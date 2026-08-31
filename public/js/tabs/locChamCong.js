@@ -2,7 +2,7 @@ import { state } from "../state.js";
 import { api } from "../api.js";
 import { t } from "../i18n.js";
 import { timeToMinutes, hoursBetween, fmtHours, monthKeyOf } from "../utils/time.js";
-import { showToast, setBtnLoading, renderPagination } from "../utils/ui.js";
+import { showToast, setBtnLoading, renderPagination, showConfirmDialog } from "../utils/ui.js";
 import { empName } from "./chamCong.js";
 
 export function renderFilterEmployeeSelect() {
@@ -131,7 +131,14 @@ export function renderFilterResults(onDataChanged) {
 }
 
 async function deleteFilterEntry(id, date, onDataChanged) {
-  if (!confirm(t("confirmDeleteEntry"))) return;
+  const ok = await showConfirmDialog({
+    title: t("confirmDeleteEntryTitle"),
+    message: t("confirmDeleteEntry"),
+    confirmText: t("btnConfirmDelete"),
+    cancelText: t("btnCancel"),
+    isDanger: true,
+  });
+  if (!ok) return;
   try {
     await api(`/api/entries/${id}`, { method: "DELETE" });
     showToast(t("entryDeleted"), "success");

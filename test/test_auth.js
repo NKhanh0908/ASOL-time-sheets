@@ -33,13 +33,13 @@ async function testMigrationAndLookup() {
 
   const migrated = app.migrateEmployeeList(legacyEmployees);
   assert.strictEqual(migrated.length, 2);
-  assert.strictEqual(migrated[0].code, "NV01");
+  assert.strictEqual(migrated[0].code, "TTS01");
   assert.ok(migrated[0].password_hash, "password_hash should be populated");
   assert.ok(migrated[0].salt, "salt should be populated");
-  assert.strictEqual(app.verifyPassword("NV01123456", migrated[0].password_hash, migrated[0].salt), true);
+  assert.strictEqual(app.verifyPassword("TTS01123456", migrated[0].password_hash, migrated[0].salt), true);
 
-  assert.strictEqual(migrated[1].code, "NV02");
-  assert.strictEqual(app.verifyPassword("NV02123456", migrated[1].password_hash, migrated[1].salt), true);
+  assert.strictEqual(migrated[1].code, "TTS02");
+  assert.strictEqual(app.verifyPassword("TTS02123456", migrated[1].password_hash, migrated[1].salt), true);
 
   console.log("✔ Employee Migration passed!");
 }
@@ -50,7 +50,7 @@ async function testTokenAndMiddleware() {
   const empPayload = {
     role: "employee",
     id: "emp-uuid-1",
-    code: "NV01",
+    code: "TTS01",
     name: "Nguyễn Văn A",
   };
   const empToken = app.generateAuthToken(empPayload);
@@ -60,7 +60,7 @@ async function testTokenAndMiddleware() {
   assert.ok(verifiedEmp, "Token should verify successfully");
   assert.strictEqual(verifiedEmp.role, "employee");
   assert.strictEqual(verifiedEmp.id, "emp-uuid-1");
-  assert.strictEqual(verifiedEmp.code, "NV01");
+  assert.strictEqual(verifiedEmp.code, "TTS01");
   assert.strictEqual(verifiedEmp.name, "Nguyễn Văn A");
 
   const adminPayload = { role: "admin" };
@@ -82,9 +82,9 @@ async function testAuthEndpoints() {
   const port = server.address().port;
 
   try {
-    const initHashed = app.hashPassword("NVTEST123456");
+    const initHashed = app.hashPassword("TTSTEST123456");
     const emp = await app.db.createEmployee({
-      code: "NVTEST",
+      code: "TTSTEST",
       name: "Test Auth User",
       password_hash: initHashed.hash,
       salt: initHashed.salt,
@@ -97,12 +97,12 @@ async function testAuthEndpoints() {
       path: "/api/auth/login",
       method: "POST",
       headers: { "Content-Type": "application/json" },
-    }, { role: "employee", code: "NVTEST", password: "NVTEST123456" });
+    }, { role: "employee", code: "TTSTEST", password: "TTSTEST123456" });
 
     assert.strictEqual(empLoginRes.status, 200);
     assert.ok(empLoginRes.body.token, "Should return session token");
     assert.strictEqual(empLoginRes.body.user.role, "employee");
-    assert.strictEqual(empLoginRes.body.user.code, "NVTEST");
+    assert.strictEqual(empLoginRes.body.user.code, "TTSTEST");
     const empToken = empLoginRes.body.token;
 
     // 2. GET /api/auth/me with employee token
@@ -114,7 +114,7 @@ async function testAuthEndpoints() {
       headers: { Authorization: `Bearer ${empToken}` },
     });
     assert.strictEqual(meRes.status, 200);
-    assert.strictEqual(meRes.body.user.code, "NVTEST");
+    assert.strictEqual(meRes.body.user.code, "TTSTEST");
 
     // 3. Employee Change Password
     const changePassRes = await makeRequest(server, {
@@ -126,7 +126,7 @@ async function testAuthEndpoints() {
         "Content-Type": "application/json",
         Authorization: `Bearer ${empToken}`,
       },
-    }, { currentPassword: "NVTEST123456", newPassword: "newpassword123" });
+    }, { currentPassword: "TTSTEST123456", newPassword: "newpassword123" });
     assert.strictEqual(changePassRes.status, 200);
     assert.strictEqual(changePassRes.body.success, true);
 
@@ -137,7 +137,7 @@ async function testAuthEndpoints() {
       path: "/api/auth/login",
       method: "POST",
       headers: { "Content-Type": "application/json" },
-    }, { role: "employee", code: "NVTEST", password: "newpassword123" });
+    }, { role: "employee", code: "TTSTEST", password: "newpassword123" });
     assert.strictEqual(newLoginRes.status, 200);
 
     // 5. Admin Login
@@ -179,10 +179,10 @@ async function testEmployeeManagement() {
         "Content-Type": "application/json",
         Authorization: `Bearer ${adminToken}`,
       },
-    }, { code: "NV99", name: "Nhân viên Test 99", password: "custompassword" });
+    }, { code: "TTS99", name: "Thực tập sinh Test 99", password: "custompassword" });
 
     assert.strictEqual(createRes.status, 200);
-    assert.strictEqual(createRes.body.employee.code, "NV99");
+    assert.strictEqual(createRes.body.employee.code, "TTS99");
     const newEmpId = createRes.body.employee.id;
 
     // 2. Verify duplicate code is rejected
@@ -195,7 +195,7 @@ async function testEmployeeManagement() {
         "Content-Type": "application/json",
         Authorization: `Bearer ${adminToken}`,
       },
-    }, { code: "NV99", name: "Trùng mã" });
+    }, { code: "TTS99", name: "Trùng mã" });
     assert.strictEqual(dupRes.status, 400);
 
     // 3. Admin Reset Password for Employee
@@ -219,7 +219,7 @@ async function testEmployeeManagement() {
       path: "/api/auth/login",
       method: "POST",
       headers: { "Content-Type": "application/json" },
-    }, { role: "employee", code: "NV99", password: resetRes.body.generatedPassword });
+    }, { role: "employee", code: "TTS99", password: resetRes.body.generatedPassword });
     assert.strictEqual(loginResetRes.status, 200);
 
     // Clean up
@@ -245,8 +245,8 @@ async function testScopedAccess() {
 
   try {
     const adminToken = app.generateAuthToken({ role: "admin" });
-    const emp1Token = app.generateAuthToken({ role: "employee", id: "emp-1", code: "NV01", name: "User 1" });
-    const emp2Token = app.generateAuthToken({ role: "employee", id: "emp-2", code: "NV02", name: "User 2" });
+    const emp1Token = app.generateAuthToken({ role: "employee", id: "emp-1", code: "TTS01", name: "User 1" });
+    const emp2Token = app.generateAuthToken({ role: "employee", id: "emp-2", code: "TTS02", name: "User 2" });
 
     // 1. Employee 1 creates an entry
     const createRes1 = await makeRequest(server, {

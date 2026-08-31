@@ -1,7 +1,7 @@
 import { setAuthState } from "../state.js";
 import { loginUser } from "../api.js";
 import { t } from "../i18n.js";
-import { showToast, setBtnLoading } from "../utils/ui.js";
+import { showToast, setBtnLoading, showInfoDialog } from "../utils/ui.js";
 
 function setGateError(msg) {
   const errBox = document.getElementById("loginGateError");
@@ -64,9 +64,13 @@ export function initLoginGate(onLoginSuccess) {
   });
 
   // Forgot Password popup
-  linkForgot?.addEventListener("click", (e) => {
+  linkForgot?.addEventListener("click", async (e) => {
     e.preventDefault();
-    alert(t("forgotPasswordInfo"));
+    await showInfoDialog({
+      title: t("forgotPasswordModalTitle"),
+      message: t("forgotPasswordInfo"),
+      closeText: t("btnClose"),
+    });
   });
 
   // Employee Login Form Submission

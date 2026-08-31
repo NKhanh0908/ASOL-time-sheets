@@ -2,7 +2,7 @@ import { state } from "../state.js";
 import { api } from "../api.js";
 import { t } from "../i18n.js";
 import { todayStr, monthKeyOf, timeToMinutes, hoursBetween, fmtHours, weekdayLabelFor } from "../utils/time.js";
-import { showToast, setBtnLoading, renderPagination } from "../utils/ui.js";
+import { showToast, setBtnLoading, renderPagination, showConfirmDialog } from "../utils/ui.js";
 
 export function empName(id) {
   const emp = state.employees.find((e) => e.id === id);
@@ -365,7 +365,14 @@ async function quickCheckout(entry, onDataChanged) {
 }
 
 async function deleteDayEntry(id, mk, onDataChanged) {
-  if (!confirm(t("confirmDeleteEntry"))) return;
+  const ok = await showConfirmDialog({
+    title: t("confirmDeleteEntryTitle"),
+    message: t("confirmDeleteEntry"),
+    confirmText: t("btnConfirmDelete"),
+    cancelText: t("btnCancel"),
+    isDanger: true,
+  });
+  if (!ok) return;
   try {
     await api(`/api/entries/${id}`, { method: "DELETE" });
     showToast(t("entryDeleted"), "success");

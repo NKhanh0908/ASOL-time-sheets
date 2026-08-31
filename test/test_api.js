@@ -16,7 +16,7 @@ function runTest() {
     const { date, employeeId, in: timeIn, out, mode, note } = body;
     const trimmedNote = (note || "").trim();
     if (!date || !employeeId || !mode || !trimmedNote) {
-      return { status: 400, error: "Thiếu ngày, nhân viên, hình thức hoặc ghi chú" };
+      return { status: 400, error: "Thiếu ngày, thực tập sinh, hình thức hoặc ghi chú" };
     }
     return {
       status: 200,
@@ -130,7 +130,7 @@ function runTest() {
     if (!existing) return { allowed: true };
     const isCompleted = (existing.in && existing.out) || existing.mode === "Nghỉ" || existing.mode === "Off";
     if (isCompleted) {
-      return { allowed: false, error: "Nhân viên này đã hoàn thành chấm công trong ngày hôm nay!" };
+      return { allowed: false, error: "Thực tập sinh này đã hoàn thành chấm công trong ngày hôm nay!" };
     }
     if (existing.in && !existing.out && newPayload.out) {
       return { allowed: true, isUpdate: true };

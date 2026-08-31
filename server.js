@@ -105,10 +105,10 @@ function migrateEmployeeList(employees = []) {
   return employees.map((emp) => {
     let code = emp.code;
     if (!code) {
-      while (usedCodes.has(`NV${String(counter).padStart(2, "0")}`)) {
+      while (usedCodes.has(`TTS${String(counter).padStart(2, "0")}`)) {
         counter++;
       }
-      code = `NV${String(counter).padStart(2, "0")}`;
+      code = `TTS${String(counter).padStart(2, "0")}`;
       usedCodes.add(code);
       counter++;
     }
@@ -420,19 +420,19 @@ app.post("/api/auth/login", async (req, res) => {
       return res.json({ token, user });
     }
 
-    // Employee Login
+    // Employee / Intern Login
     if (!code) {
-      return res.status(400).json({ error: "Vui lòng nhập mã nhân viên" });
+      return res.status(400).json({ error: "Vui lòng nhập mã thực tập sinh" });
     }
     const cleanCode = String(code).trim().toUpperCase();
     const employee = await db.getEmployeeByCode(cleanCode);
     if (!employee) {
-      return res.status(401).json({ error: "Mã nhân viên hoặc mật khẩu không chính xác" });
+      return res.status(401).json({ error: "Mã thực tập sinh hoặc mật khẩu không chính xác" });
     }
 
     const isValid = verifyPassword(password, employee.password_hash, employee.salt);
     if (!isValid) {
-      return res.status(401).json({ error: "Mã nhân viên hoặc mật khẩu không chính xác" });
+      return res.status(401).json({ error: "Mã thực tập sinh hoặc mật khẩu không chính xác" });
     }
 
     const user = {
@@ -582,15 +582,15 @@ app.post("/api/employees", requireAdmin, async (req, res) => {
     if (finalCode) {
       const exists = employees.some((e) => (e.code || "").toUpperCase() === finalCode);
       if (exists) {
-        return res.status(400).json({ error: "Mã nhân viên này đã tồn tại" });
+        return res.status(400).json({ error: "Mã thực tập sinh này đã tồn tại" });
       }
     } else {
       let counter = 1;
       const usedCodes = new Set(employees.map((e) => (e.code || "").toUpperCase()).filter(Boolean));
-      while (usedCodes.has(`NV${String(counter).padStart(2, "0")}`)) {
+      while (usedCodes.has(`TTS${String(counter).padStart(2, "0")}`)) {
         counter++;
       }
-      finalCode = `NV${String(counter).padStart(2, "0")}`;
+      finalCode = `TTS${String(counter).padStart(2, "0")}`;
     }
 
     const rawPassword = (password || "").trim() || generateRandomPassword(finalCode);
@@ -617,10 +617,10 @@ app.post("/api/employees/:id/reset-password", requireAdmin, async (req, res) => 
   try {
     const employee = await db.getEmployeeById(req.params.id);
     if (!employee) {
-      return res.status(404).json({ error: "Không tìm thấy nhân viên" });
+      return res.status(404).json({ error: "Không tìm thấy thực tập sinh" });
     }
 
-    const newRawPassword = (req.body.newPassword || "").trim() || generateRandomPassword(employee.code || "NV");
+    const newRawPassword = (req.body.newPassword || "").trim() || generateRandomPassword(employee.code || "TTS");
     const { hash, salt } = hashPassword(newRawPassword);
 
     await db.updateEmployee(req.params.id, { password_hash: hash, salt });
@@ -925,7 +925,7 @@ app.post("/api/entries", requireAuth, async (req, res) => {
 
   const trimmedNote = (note || "").trim();
   if (!date || !employeeId || !mode || !trimmedNote) {
-    return res.status(400).json({ error: "Thiếu ngày, nhân viên, hình thức hoặc ghi chú" });
+    return res.status(400).json({ error: "Thiếu ngày, thực tập sinh, hình thức hoặc ghi chú" });
   }
 
   try {
@@ -934,7 +934,7 @@ app.post("/api/entries", requireAuth, async (req, res) => {
     if (existing) {
       const isCompleted = (existing.in && existing.out) || existing.mode === "Nghỉ" || existing.mode === "Off";
       if (isCompleted) {
-        return res.status(400).json({ error: "Nhân viên này đã hoàn thành chấm công trong ngày hôm nay!" });
+        return res.status(400).json({ error: "Thực tập sinh này đã hoàn thành chấm công trong ngày hôm nay!" });
       }
       // Nếu đã có in mà chưa có out, và gửi lên có out -> tự động cập nhật bản ghi
       if (existing.in && !existing.out && (out || timeIn)) {

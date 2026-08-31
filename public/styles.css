@@ -650,20 +650,26 @@ body:not(.is-admin) .admin-only {
   left: 0;
   width: 100vw;
   height: 100vh;
-  background: rgba(34, 48, 60, 0.45);
+  background: rgba(34, 48, 60, 0.55);
   display: flex;
   align-items: center;
   justify-content: center;
-  z-index: 1000;
-  backdrop-filter: blur(2px);
+  z-index: 1000000;
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+  animation: fadeIn 0.15s ease-out;
+}
+.modal-backdrop.hiding {
+  opacity: 0;
+  transition: opacity 0.2s ease-in;
 }
 .modal-box {
   background: var(--card);
   border: 2px solid var(--ink);
   border-radius: 8px;
   width: 90%;
-  max-width: 420px;
-  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
+  max-width: 440px;
+  box-shadow: 6px 6px 0px rgba(0, 0, 0, 0.25);
   animation: modalPop 0.2s cubic-bezier(0.16, 1, 0.3, 1);
 }
 @keyframes modalPop {
@@ -676,11 +682,14 @@ body:not(.is-admin) .admin-only {
   align-items: center;
   padding: 14px 18px;
   border-bottom: 1px solid var(--line);
+  background: var(--paper-deep);
+  border-radius: 6px 6px 0 0;
 }
 .modal-header h3 {
   margin: 0;
   font-family: var(--font-display);
-  font-size: 16px;
+  font-size: 15px;
+  font-weight: 700;
   color: var(--ink);
 }
 .modal-close {
@@ -690,8 +699,11 @@ body:not(.is-admin) .admin-only {
   cursor: pointer;
   color: var(--ink-soft);
 }
+.modal-close:hover {
+  color: var(--ink);
+}
 .modal-body {
-  padding: 16px 18px;
+  padding: 18px;
   display: flex;
   flex-direction: column;
   gap: 12px;
@@ -702,13 +714,13 @@ body:not(.is-admin) .admin-only {
   gap: 4px;
 }
 .modal-field label {
-  font-family: var(--font-mono);
-  font-size: 11px;
+  font-family: var(--font-display);
+  font-size: 12px;
   font-weight: 600;
-  color: var(--ink-soft);
+  color: var(--ink);
 }
 .modal-field input {
-  padding: 8px 10px;
+  padding: 9px 12px;
   border: 1px solid var(--line);
   border-radius: 5px;
   font-size: 13px;
@@ -722,6 +734,39 @@ body:not(.is-admin) .admin-only {
   border-top: 1px solid var(--line);
   background: var(--paper);
   border-radius: 0 0 6px 6px;
+}
+
+.dialog-msg {
+  font-family: var(--font-display);
+  font-size: 14px;
+  color: var(--ink);
+  margin: 0;
+  line-height: 1.5;
+}
+
+.dialog-copy-box {
+  display: flex;
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.dialog-copy-input {
+  flex: 1;
+  padding: 8px 12px;
+  border: 1px dashed var(--ink);
+  border-radius: 5px;
+  background: var(--paper-deep);
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--ink);
+}
+
+.btn-danger {
+  background: #dc2626 !important;
+  border-color: #b91c1c !important;
+}
+.btn-danger:hover {
+  background: #b91c1c !important;
 }
 
 /* Top-Center Toast Notification System - Matching Main App Theme */

@@ -1,7 +1,7 @@
 import { state } from "../state.js";
 import { api, createEmployee, resetEmployeePassword } from "../api.js";
 import { t } from "../i18n.js";
-import { showToast, setBtnLoading } from "../utils/ui.js";
+import { showToast, setBtnLoading, showConfirmDialog, showPromptDialog, showInfoDialog } from "../utils/ui.js";
 
 export function renderEmployeeList(onEmployeeChanged) {
   const list = document.getElementById("empList");
@@ -36,14 +36,27 @@ export function renderEmployeeList(onEmployeeChanged) {
 }
 
 async function handleResetPassword(emp) {
-  const newPass = prompt(t("promptNewPassOptional"), "");
+  const newPass = await showPromptDialog({
+    title: t("modalResetPassTitle"),
+    label: `${emp.name} (${emp.code || ""})`,
+    placeholder: t("promptNewPassOptional"),
+    defaultValue: "",
+    confirmText: t("btnConfirmReset"),
+    cancelText: t("btnCancel"),
+  });
+
   if (newPass === null) return; // User cancelled
 
   try {
     const res = await resetEmployeePassword(emp.id, newPass.trim());
     const pass = res.generatedPassword;
-    alert(t("resetPasswordSuccess", { name: emp.name, pass }));
     showToast(t("passChangedSuccess"), "success");
+    await showInfoDialog({
+      title: t("modalResetPassTitle"),
+      message: `${t("infoNewPassGenerated")} <strong>${emp.name}</strong>`,
+      copyValue: pass,
+      closeText: t("btnClose"),
+    });
   } catch (err) {
     showToast(err.message, "error");
   }
@@ -62,7 +75,16 @@ export async function loadEmployees(onEmployeeChanged) {
 }
 
 async function removeEmployee(id, onEmployeeChanged) {
-  if (!confirm(t("confirmDeleteEmp"))) return;
+  const ok = await showConfirmDialog({
+    title: t("confirmDeleteEmpTitle"),
+    message: t("confirmDeleteEmp"),
+    confirmText: t("btnConfirmDelete"),
+    cancelText: t("btnCancel"),
+    isDanger: true,
+  });
+
+  if (!ok) return;
+
   try {
     await api(`/api/employees/${id}`, { method: "DELETE" });
     showToast(t("empDeleted"), "success");
@@ -77,16 +99,7 @@ export function initNhanVienTab(onEmployeeChanged) {
   const inputEmpCode = document.getElementById("inputEmpCode");
   const newEmpName = document.getElementById("newEmpName");
   const inputEmpPass = document.getElementById("inputEmpPass");
-  const btnRandomPass = document.getElementById("btnRandomEmpPass");
   const btnSubmit = document.getElementById("btnAddEmpSubmit");
-
-  btnRandomPass?.addEventListener("click", () => {
-    const code = (inputEmpCode?.value || "NV").trim().toUpperCase();
-    const digits = Math.floor(100000 + Math.random() * 900000);
-    if (inputEmpPass) {
-      inputEmpPass.value = `${code}${digits}`;
-    }
-  });
 
   empForm?.addEventListener("submit", async (ev) => {
     ev.preventDefault();
@@ -99,14 +112,21 @@ export function initNhanVienTab(onEmployeeChanged) {
     setBtnLoading(btnSubmit, true);
     try {
       const res = await createEmployee({ code, name, password });
-      if (res.generatedPassword) {
-        alert(t("resetPasswordSuccess", { name: res.employee.name, pass: res.generatedPassword }));
-      }
       showToast(t("empAdded"), "success");
+
       if (inputEmpCode) inputEmpCode.value = "";
       if (newEmpName) newEmpName.value = "";
       if (inputEmpPass) inputEmpPass.value = "";
       await loadEmployees(onEmployeeChanged);
+
+      if (res.generatedPassword) {
+        await showInfoDialog({
+          title: t("empAdded"),
+          message: `${t("infoNewPassGenerated")} <strong>${res.employee.name}</strong> (${res.employee.code})`,
+          copyValue: res.generatedPassword,
+          closeText: t("btnClose"),
+        });
+      }
     } catch (err) {
       showToast(err.message, "error");
     } finally {
