@@ -365,6 +365,225 @@ app.delete("/api/employees/:id", requireAdmin, async (req, res) => {
   }
 });
 
+// ---------- Google Sheet Sync & Calculation Helpers ----------
+function calculateWorkHours(inStr, outStr, mode) {
+  if (mode === "Nghỉ" || mode === "Off") return 0;
+  if (!inStr || !outStr) return 0;
+  const [ih, im] = inStr.split(":").map(Number);
+  const [oh, om] = outStr.split(":").map(Number);
+  if (isNaN(ih) || isNaN(im) || isNaN(oh) || isNaN(om)) return 0;
+  const inMin = ih * 60 + im;
+  const outMin = oh * 60 + om;
+  if (outMin <= inMin) return 0;
+  const rawMinutes = outMin - inMin;
+  const rawHours = rawMinutes / 60;
+  if (rawHours > 5) {
+    const workedMin = rawMinutes - 90;
+    return workedMin > 0 ? workedMin / 60 : 0;
+  }
+  return rawHours;
+}
+
+function buildSyncEntryPayload(entry, employeeName = "") {
+  return {
+    action: "sync_entry",
+    entry: {
+      date: entry.date,
+      employeeId: entry.employeeId,
+      employeeName: employeeName,
+      in: entry.in || "",
+      out: entry.out || "",
+      workHours: calculateWorkHours(entry.in, entry.out, entry.mode),
+      mode: entry.mode || "Onsite",
+      note: entry.note || "",
+      updatedAt: entry.updatedAt || new Date().toISOString(),
+    },
+  };
+}
+
+function aggregateMonthSummary(employees, entries) {
+  return employees.map((emp) => {
+    const empEntries = entries.filter((e) => e.employeeId === emp.id);
+    const totalHours = empEntries.reduce((acc, e) => acc + calculateWorkHours(e.in, e.out, e.mode), 0);
+    const onsiteDays = empEntries.filter((e) => e.mode === "Onsite").length;
+    const remoteDays = empEntries.filter((e) => e.mode === "Remote").length;
+    const offDays = empEntries.filter((e) => e.mode === "Nghỉ" || e.mode === "Off").length;
+    return {
+      employeeId: emp.id,
+      employeeName: emp.name,
+      totalHours: Math.round(totalHours * 100) / 100,
+      onsiteDays,
+      remoteDays,
+      offDays,
+    };
+  });
+}
+
+async function getEffectiveWebhookConfig() {
+  const dbUrl = await db.getSetting("google_sheet_webhook_url");
+  const dbEnabled = await db.getSetting("google_sheet_sync_enabled");
+  const envUrl = process.env.GOOGLE_SHEET_WEBHOOK_URL || "";
+
+  const webhookUrl = dbUrl !== null && dbUrl !== undefined && dbUrl !== "" ? dbUrl : envUrl;
+  const syncEnabled = dbEnabled === null || dbEnabled === undefined ? true : Boolean(dbEnabled);
+
+  return {
+    webhookUrl: webhookUrl || "",
+    syncEnabled,
+    hasEnvFallback: Boolean(envUrl),
+  };
+}
+
+async function sendGoogleSheetWebhook(payload, customUrl = null) {
+  try {
+    let targetUrl = customUrl;
+    if (!targetUrl) {
+      const config = await getEffectiveWebhookConfig();
+      if (!config.syncEnabled || !config.webhookUrl) return { skipped: true };
+      targetUrl = config.webhookUrl;
+    }
+
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 5000);
+
+    const res = await fetch(targetUrl, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+      signal: controller.signal,
+    });
+    clearTimeout(timeout);
+
+    if (!res.ok) {
+      const text = await res.text().catch(() => "");
+      return { success: false, status: res.status, error: text || `HTTP ${res.status}` };
+    }
+    const data = await res.json().catch(() => ({ status: "success" }));
+    return { success: true, data };
+  } catch (err) {
+    return { success: false, error: err.message };
+  }
+}
+
+// ---------- Settings Endpoints ----------
+app.get("/api/settings", requireAdmin, async (req, res) => {
+  try {
+    const config = await getEffectiveWebhookConfig();
+    const dbUrl = await db.getSetting("google_sheet_webhook_url");
+    res.json({
+      googleSheetWebhookUrl: dbUrl || "",
+      effectiveWebhookUrl: config.webhookUrl,
+      googleSheetSyncEnabled: config.syncEnabled,
+      hasEnvFallback: config.hasEnvFallback,
+    });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.post("/api/settings", requireAdmin, async (req, res) => {
+  const { googleSheetWebhookUrl, googleSheetSyncEnabled } = req.body;
+  try {
+    if (googleSheetWebhookUrl !== undefined) {
+      await db.setSetting("google_sheet_webhook_url", String(googleSheetWebhookUrl).trim());
+    }
+    if (googleSheetSyncEnabled !== undefined) {
+      await db.setSetting("google_sheet_sync_enabled", Boolean(googleSheetSyncEnabled));
+    }
+    const config = await getEffectiveWebhookConfig();
+    const dbUrl = await db.getSetting("google_sheet_webhook_url");
+    res.json({
+      googleSheetWebhookUrl: dbUrl || "",
+      googleSheetSyncEnabled: config.syncEnabled,
+      hasEnvFallback: config.hasEnvFallback,
+    });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// ---------- Sync Endpoints ----------
+app.post("/api/sync/test", requireAdmin, async (req, res) => {
+  const { url } = req.body;
+  try {
+    const config = await getEffectiveWebhookConfig();
+    const targetUrl = url ? String(url).trim() : config.webhookUrl;
+    if (!targetUrl) {
+      return res.status(400).json({ error: "Chưa cấu hình Google Sheet Webhook URL" });
+    }
+
+    const payload = {
+      action: "test_connection",
+      source: "timesheet-app",
+      timestamp: new Date().toISOString(),
+    };
+
+    const result = await sendGoogleSheetWebhook(payload, targetUrl);
+    if (!result.success) {
+      return res.status(502).json({ error: result.error || "Không thể kết nối đến Google Sheet" });
+    }
+    res.json({ success: true, message: "Kết nối Google Sheet thành công!" });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.post("/api/sync/month", requireAdmin, async (req, res) => {
+  const { month } = req.body;
+  if (!month || !/^\d{4}-\d{2}$/.test(month)) {
+    return res.status(400).json({ error: "Tháng không hợp lệ (định dạng YYYY-MM)" });
+  }
+
+  try {
+    const config = await getEffectiveWebhookConfig();
+    if (!config.webhookUrl) {
+      return res.status(400).json({ error: "Chưa cấu hình Google Sheet Webhook URL" });
+    }
+
+    const [employees, entries] = await Promise.all([
+      db.getEmployees(),
+      db.getEntries({ month }),
+    ]);
+
+    const empMap = new Map(employees.map((e) => [e.id, e.name]));
+    const formattedEntries = entries.map((e) => ({
+      date: e.date,
+      employeeId: e.employeeId,
+      employeeName: empMap.get(e.employeeId) || "",
+      in: e.in || "",
+      out: e.out || "",
+      workHours: calculateWorkHours(e.in, e.out, e.mode),
+      mode: e.mode || "Onsite",
+      note: e.note || "",
+      updatedAt: e.created_at || new Date().toISOString(),
+    }));
+
+    const summary = aggregateMonthSummary(employees, entries);
+
+    const payload = {
+      action: "sync_month",
+      month,
+      entries: formattedEntries,
+      summary,
+    };
+
+    const result = await sendGoogleSheetWebhook(payload, config.webhookUrl);
+    if (!result.success) {
+      return res.status(502).json({ error: result.error || "Lỗi khi gửi dữ liệu sang Google Sheet" });
+    }
+
+    res.json({
+      success: true,
+      month,
+      entryCount: formattedEntries.length,
+      summaryCount: summary.length,
+      message: `Đồng bộ thành công ${formattedEntries.length} bản ghi tháng ${month}!`,
+    });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // ---------- Entries Endpoints ----------
 app.get("/api/entries", async (req, res) => {
   try {
@@ -399,6 +618,19 @@ app.post("/api/entries", async (req, res) => {
           note: trimmedNote || existing.note,
         };
         const updated = await db.updateEntry(existing.id, patch);
+        
+        // Asynchronous non-blocking sync
+        (async () => {
+          try {
+            const employees = await db.getEmployees();
+            const emp = employees.find((e) => e.id === updated.employeeId);
+            const payload = buildSyncEntryPayload(updated, emp ? emp.name : "");
+            sendGoogleSheetWebhook(payload);
+          } catch (err) {
+            console.error("Async real-time sync failed:", err.message);
+          }
+        })();
+
         return res.json(updated);
       }
       return res.status(400).json({ error: "Nhân viên này đã điểm danh vào rồi!" });
@@ -414,6 +646,19 @@ app.post("/api/entries", async (req, res) => {
       note: trimmedNote,
     };
     const saved = await db.createEntry(entry);
+
+    // Asynchronous non-blocking sync
+    (async () => {
+      try {
+        const employees = await db.getEmployees();
+        const emp = employees.find((e) => e.id === saved.employeeId);
+        const payload = buildSyncEntryPayload(saved, emp ? emp.name : "");
+        sendGoogleSheetWebhook(payload);
+      } catch (err) {
+        console.error("Async real-time sync failed:", err.message);
+      }
+    })();
+
     res.json(saved);
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -433,6 +678,19 @@ app.put("/api/entries/:id", async (req, res) => {
   try {
     const updated = await db.updateEntry(req.params.id, patch);
     if (!updated) return res.status(404).json({ error: "Không tìm thấy bản ghi" });
+
+    // Asynchronous non-blocking sync
+    (async () => {
+      try {
+        const employees = await db.getEmployees();
+        const emp = employees.find((e) => e.id === updated.employeeId);
+        const payload = buildSyncEntryPayload(updated, emp ? emp.name : "");
+        sendGoogleSheetWebhook(payload);
+      } catch (err) {
+        console.error("Async real-time sync failed:", err.message);
+      }
+    })();
+
     res.json(updated);
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -462,5 +720,10 @@ app.verifyPassword = verifyPassword;
 app.generateAdminToken = generateAdminToken;
 app.verifyAdminToken = verifyAdminToken;
 app.requireAdmin = requireAdmin;
+app.calculateWorkHours = calculateWorkHours;
+app.buildSyncEntryPayload = buildSyncEntryPayload;
+app.aggregateMonthSummary = aggregateMonthSummary;
+app.getEffectiveWebhookConfig = getEffectiveWebhookConfig;
+app.sendGoogleSheetWebhook = sendGoogleSheetWebhook;
 
 module.exports = app;
