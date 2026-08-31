@@ -3,9 +3,22 @@ import { loginUser } from "../api.js";
 import { t } from "../i18n.js";
 import { showToast, setBtnLoading } from "../utils/ui.js";
 
+function setGateError(msg) {
+  const errBox = document.getElementById("loginGateError");
+  if (!errBox) return;
+  if (msg) {
+    errBox.textContent = msg;
+    errBox.style.display = "flex";
+  } else {
+    errBox.textContent = "";
+    errBox.style.display = "none";
+  }
+}
+
 export function showLoginGate() {
   const gate = document.getElementById("loginGate");
   if (gate) {
+    setGateError(null);
     gate.style.display = "flex";
   }
 }
@@ -13,6 +26,7 @@ export function showLoginGate() {
 export function hideLoginGate() {
   const gate = document.getElementById("loginGate");
   if (gate) {
+    setGateError(null);
     gate.style.display = "none";
   }
 }
@@ -27,6 +41,7 @@ export function initLoginGate(onLoginSuccess) {
 
   // Tab Switching inside Login Gate
   btnTabEmployee?.addEventListener("click", () => {
+    setGateError(null);
     btnTabEmployee.classList.add("active");
     btnTabAdmin?.classList.remove("active");
     formEmp?.classList.add("active");
@@ -35,11 +50,17 @@ export function initLoginGate(onLoginSuccess) {
   });
 
   btnTabAdmin?.addEventListener("click", () => {
+    setGateError(null);
     btnTabAdmin.classList.add("active");
     btnTabEmployee?.classList.remove("active");
     formAdmin?.classList.add("active");
     formEmp?.classList.remove("active");
     document.getElementById("adminGatePassword")?.focus();
+  });
+
+  // Clear error when user inputs
+  gate?.querySelectorAll("input").forEach((inp) => {
+    inp.addEventListener("input", () => setGateError(null));
   });
 
   // Forgot Password popup
@@ -51,11 +72,13 @@ export function initLoginGate(onLoginSuccess) {
   // Employee Login Form Submission
   formEmp?.addEventListener("submit", async (e) => {
     e.preventDefault();
+    setGateError(null);
     const code = (document.getElementById("empLoginCode")?.value || "").trim();
     const password = (document.getElementById("empLoginPassword")?.value || "").trim();
     const btnSubmit = document.getElementById("btnSubmitEmpLogin");
 
     if (!code || !password) {
+      setGateError(t("errMissingFields"));
       return showToast(t("errMissingFields"), "warning");
     }
 
@@ -69,7 +92,9 @@ export function initLoginGate(onLoginSuccess) {
         onLoginSuccess(res.user);
       }
     } catch (err) {
-      showToast(err.message || t("errInvalidCodeOrPass"), "error");
+      const msg = err.message || t("errInvalidCodeOrPass");
+      setGateError(msg);
+      showToast(msg, "error");
     } finally {
       setBtnLoading(btnSubmit, false);
     }
@@ -78,10 +103,12 @@ export function initLoginGate(onLoginSuccess) {
   // Admin Login Form Submission (inside Login Gate)
   formAdmin?.addEventListener("submit", async (e) => {
     e.preventDefault();
+    setGateError(null);
     const password = (document.getElementById("adminGatePassword")?.value || "").trim();
     const btnSubmit = document.getElementById("btnSubmitAdminGateLogin");
 
     if (!password) {
+      setGateError(t("errMissingFields"));
       return showToast(t("errMissingFields"), "warning");
     }
 
@@ -95,7 +122,9 @@ export function initLoginGate(onLoginSuccess) {
         onLoginSuccess(res.user);
       }
     } catch (err) {
-      showToast(err.message, "error");
+      const msg = err.message || "Mật khẩu không chính xác";
+      setGateError(msg);
+      showToast(msg, "error");
     } finally {
       setBtnLoading(btnSubmit, false);
     }

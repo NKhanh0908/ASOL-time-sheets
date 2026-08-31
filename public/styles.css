@@ -734,7 +734,7 @@ body:not(.is-admin) .admin-only {
   flex-direction: column;
   align-items: center;
   gap: 10px;
-  z-index: 9999;
+  z-index: 9999999;
   pointer-events: none;
   width: 92%;
   max-width: 440px;
@@ -1122,6 +1122,26 @@ body:not(.is-admin) .admin-only {
   display: flex;
   flex-direction: column;
   gap: 14px;
+}
+
+.gate-error {
+  background: #fee2e2;
+  color: #991b1b;
+  border: 1px solid #f87171;
+  padding: 8px 12px;
+  border-radius: 6px;
+  font-size: 13px;
+  font-family: var(--font-display);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  animation: gateShake 0.3s ease-in-out;
+}
+
+@keyframes gateShake {
+  0%, 100% { transform: translateX(0); }
+  25% { transform: translateX(-5px); }
+  75% { transform: translateX(5px); }
 }
 
 .gate-field {
