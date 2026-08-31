@@ -160,15 +160,98 @@ async function testAuthEndpoints() {
   }
 }
 
+async function testEmployeeManagement() {
+  console.log("▶ Testing Employee Management & Admin Reset Password...");
+  const server = http.createServer(app);
+  await new Promise((resolve) => server.listen(0, resolve));
+  const port = server.address().port;
+
+  try {
+    const adminToken = app.generateAuthToken({ role: "admin" });
+
+    // 1. Create employee with code and custom password
+    const createRes = await makeRequest(server, {
+      hostname: "127.0.0.1",
+      port,
+      path: "/api/employees",
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${adminToken}`,
+      },
+    }, { code: "NV99", name: "Nhân viên Test 99", password: "custompassword" });
+
+    assert.strictEqual(createRes.status, 200);
+    assert.strictEqual(createRes.body.employee.code, "NV99");
+    const newEmpId = createRes.body.employee.id;
+
+    // 2. Verify duplicate code is rejected
+    const dupRes = await makeRequest(server, {
+      hostname: "127.0.0.1",
+      port,
+      path: "/api/employees",
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${adminToken}`,
+      },
+    }, { code: "NV99", name: "Trùng mã" });
+    assert.strictEqual(dupRes.status, 400);
+
+    // 3. Admin Reset Password for Employee
+    const resetRes = await makeRequest(server, {
+      hostname: "127.0.0.1",
+      port,
+      path: `/api/employees/${newEmpId}/reset-password`,
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${adminToken}`,
+      },
+    }, {});
+    assert.strictEqual(resetRes.status, 200);
+    assert.ok(resetRes.body.generatedPassword, "Should return auto-generated password");
+
+    // 4. Verify employee can login with reset password
+    const loginResetRes = await makeRequest(server, {
+      hostname: "127.0.0.1",
+      port,
+      path: "/api/auth/login",
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+    }, { role: "employee", code: "NV99", password: resetRes.body.generatedPassword });
+    assert.strictEqual(loginResetRes.status, 200);
+
+    // Clean up
+    await makeRequest(server, {
+      hostname: "127.0.0.1",
+      port,
+      path: `/api/employees/${newEmpId}`,
+      method: "DELETE",
+      headers: { Authorization: `Bearer ${adminToken}` },
+    });
+
+    console.log("✔ Employee Management & Reset Password passed!");
+  } finally {
+    server.close();
+  }
+}
+
 if (require.main === module) {
   (async () => {
     await testMigrationAndLookup();
     await testTokenAndMiddleware();
     await testAuthEndpoints();
+    await testEmployeeManagement();
   })().catch((err) => {
     console.error(err);
     process.exit(1);
   });
 }
 
-module.exports = { testMigrationAndLookup, testTokenAndMiddleware, testAuthEndpoints };
+module.exports = {
+  testMigrationAndLookup,
+  testTokenAndMiddleware,
+  testAuthEndpoints,
+  testEmployeeManagement,
+};

@@ -551,21 +551,84 @@ app.post("/api/admin/change-password", requireAdmin, async (req, res) => {
 });
 
 // ---------- Employees Endpoints ----------
+function generateRandomPassword(prefix = "NV") {
+  const digits = Math.floor(100000 + Math.random() * 900000);
+  return `${prefix}${digits}`;
+}
+
 app.get("/api/employees", async (req, res) => {
   try {
     const list = await db.getEmployees();
-    res.json(list);
+    const sanitized = list.map(({ password_hash, salt, ...emp }) => emp);
+    res.json(sanitized);
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
 });
 
 app.post("/api/employees", requireAdmin, async (req, res) => {
-  const name = (req.body.name || "").trim();
-  if (!name) return res.status(400).json({ error: "Tên không được để trống" });
+  const { name, code, password } = req.body || {};
+  const trimmedName = (name || "").trim();
+  if (!trimmedName) {
+    return res.status(400).json({ error: "Tên không được để trống" });
+  }
+
   try {
-    const emp = await db.createEmployee(name);
-    res.json(emp);
+    const employees = await db.getEmployees();
+    let finalCode = (code || "").trim().toUpperCase();
+
+    if (finalCode) {
+      const exists = employees.some((e) => (e.code || "").toUpperCase() === finalCode);
+      if (exists) {
+        return res.status(400).json({ error: "Mã nhân viên này đã tồn tại" });
+      }
+    } else {
+      let counter = 1;
+      const usedCodes = new Set(employees.map((e) => (e.code || "").toUpperCase()).filter(Boolean));
+      while (usedCodes.has(`NV${String(counter).padStart(2, "0")}`)) {
+        counter++;
+      }
+      finalCode = `NV${String(counter).padStart(2, "0")}`;
+    }
+
+    const rawPassword = (password || "").trim() || generateRandomPassword(finalCode);
+    const { hash, salt } = hashPassword(rawPassword);
+
+    const emp = await db.createEmployee({
+      code: finalCode,
+      name: trimmedName,
+      password_hash: hash,
+      salt,
+    });
+
+    const { password_hash, salt: _s, ...sanitizedEmp } = emp;
+    res.json({
+      employee: sanitizedEmp,
+      generatedPassword: rawPassword,
+    });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.post("/api/employees/:id/reset-password", requireAdmin, async (req, res) => {
+  try {
+    const employee = await db.getEmployeeById(req.params.id);
+    if (!employee) {
+      return res.status(404).json({ error: "Không tìm thấy nhân viên" });
+    }
+
+    const newRawPassword = (req.body.newPassword || "").trim() || generateRandomPassword(employee.code || "NV");
+    const { hash, salt } = hashPassword(newRawPassword);
+
+    await db.updateEmployee(req.params.id, { password_hash: hash, salt });
+
+    res.json({
+      success: true,
+      employeeId: req.params.id,
+      generatedPassword: newRawPassword,
+      message: `Đã đặt lại mật khẩu cho ${employee.name} (${employee.code})`,
+    });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
