@@ -432,12 +432,12 @@ if (process.env.NODE_ENV !== "test" && !process.env.VERCEL) {
   });
 }
 
-module.exports = {
-  app,
-  db,
-  hashPassword,
-  verifyPassword,
-  generateAdminToken,
-  verifyAdminToken,
-  requireAdmin,
-};
+// Gắn các helper functions vào app để vừa là Express handler cho Vercel Serverless, vừa export được cho tests
+app.db = db;
+app.hashPassword = hashPassword;
+app.verifyPassword = verifyPassword;
+app.generateAdminToken = generateAdminToken;
+app.verifyAdminToken = verifyAdminToken;
+app.requireAdmin = requireAdmin;
+
+module.exports = app;
