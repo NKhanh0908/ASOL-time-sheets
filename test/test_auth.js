@@ -5,7 +5,12 @@ const app = require("../server.js");
 
 function makeRequest(server, options, bodyData = null) {
   return new Promise((resolve, reject) => {
-    const req = http.request(options, (res) => {
+    const payload = bodyData ? JSON.stringify(bodyData) : "";
+    const headers = { ...options.headers };
+    if (bodyData) {
+      headers["Content-Length"] = Buffer.byteLength(payload);
+    }
+    const req = http.request({ ...options, headers }, (res) => {
       let data = "";
       res.on("data", (chunk) => (data += chunk));
       res.on("end", () => {
@@ -18,7 +23,7 @@ function makeRequest(server, options, bodyData = null) {
       });
     });
     req.on("error", reject);
-    if (bodyData) req.write(JSON.stringify(bodyData));
+    if (payload) req.write(payload);
     req.end();
   });
 }
@@ -82,9 +87,11 @@ async function testAuthEndpoints() {
   const port = server.address().port;
 
   try {
-    const initHashed = app.hashPassword("TTSTEST123456");
+    const testCode = `TTS_T${Date.now()}`;
+    const testPass = `${testCode}123`;
+    const initHashed = app.hashPassword(testPass);
     const emp = await app.db.createEmployee({
-      code: "TTSTEST",
+      code: testCode,
       name: "Test Auth User",
       password_hash: initHashed.hash,
       salt: initHashed.salt,
@@ -97,12 +104,12 @@ async function testAuthEndpoints() {
       path: "/api/auth/login",
       method: "POST",
       headers: { "Content-Type": "application/json" },
-    }, { role: "employee", code: "TTSTEST", password: "TTSTEST123456" });
+    }, { role: "employee", code: testCode, password: testPass });
 
     assert.strictEqual(empLoginRes.status, 200);
     assert.ok(empLoginRes.body.token, "Should return session token");
     assert.strictEqual(empLoginRes.body.user.role, "employee");
-    assert.strictEqual(empLoginRes.body.user.code, "TTSTEST");
+    assert.strictEqual(empLoginRes.body.user.code, testCode);
     const empToken = empLoginRes.body.token;
 
     // 2. GET /api/auth/me with employee token
@@ -114,7 +121,7 @@ async function testAuthEndpoints() {
       headers: { Authorization: `Bearer ${empToken}` },
     });
     assert.strictEqual(meRes.status, 200);
-    assert.strictEqual(meRes.body.user.code, "TTSTEST");
+    assert.strictEqual(meRes.body.user.code, testCode);
 
     // 3. Employee Change Password
     const changePassRes = await makeRequest(server, {
@@ -126,7 +133,7 @@ async function testAuthEndpoints() {
         "Content-Type": "application/json",
         Authorization: `Bearer ${empToken}`,
       },
-    }, { currentPassword: "TTSTEST123456", newPassword: "newpassword123" });
+    }, { currentPassword: testPass, newPassword: "newpassword123" });
     assert.strictEqual(changePassRes.status, 200);
     assert.strictEqual(changePassRes.body.success, true);
 
@@ -137,7 +144,7 @@ async function testAuthEndpoints() {
       path: "/api/auth/login",
       method: "POST",
       headers: { "Content-Type": "application/json" },
-    }, { role: "employee", code: "TTSTEST", password: "newpassword123" });
+    }, { role: "employee", code: testCode, password: "newpassword123" });
     assert.strictEqual(newLoginRes.status, 200);
 
     // 5. Admin Login
