@@ -30,6 +30,7 @@
         </div>
         <div id="adminControls" class="admin-controls" style="display:none;">
           <span class="badge-admin">👑 Admin</span>
+          <button type="button" id="btnOpenSettingsModal" class="btn-sub btn-sm" data-i18n="settingsModalTitle" title="Cài đặt">⚙️ Cài đặt</button>
           <button type="button" id="btnOpenChangePassModal" class="btn-sub btn-sm" data-i18n="btnChangePass">Đổi MK</button>
           <button type="button" id="btnLogoutAdmin" class="btn-sub btn-sm" data-i18n="btnLogout">Đăng xuất</button>
         </div>
@@ -229,6 +230,44 @@
         <div class="modal-footer">
           <button type="button" class="btn-sub" id="btnCancelChangePassModal" data-i18n="btnCancel">Huỷ</button>
           <button type="submit" id="btnSubmitChangePass" class="btn-primary" data-i18n="btnSubmitSave">Lưu mật khẩu</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- 3. Admin Settings Modal -->
+  <div id="modalSettings" class="modal-backdrop" style="display:none;">
+    <div class="modal-box" style="max-width: 520px;">
+      <div class="modal-header">
+        <h3 data-i18n="settingsModalTitle">⚙️ Cài đặt & Tích hợp</h3>
+        <button type="button" class="modal-close" id="btnCloseSettingsModal">&times;</button>
+      </div>
+      <form id="formSettings">
+        <div class="modal-body">
+          <div class="settings-section">
+            <h4 data-i18n="googleSheetSyncSection" style="margin-top:0; margin-bottom: 12px; font-size: 14px; color: var(--color-ink, #2b2b2b);">
+              📊 Tích hợp Google Spreadsheet
+            </h4>
+            <div class="modal-field">
+              <label for="inputWebhookUrl" data-i18n="labelWebhookUrl">Google Apps Script Webhook URL:</label>
+              <input type="url" id="inputWebhookUrl" placeholder="https://script.google.com/macros/s/.../exec" data-i18n-ph="placeholderWebhookUrl" />
+              <small class="muted-note" id="envFallbackNote" style="display:none; margin-top: 4px; font-size: 11px; color: #666;">(Đang dùng URL mặc định từ biến môi trường)</small>
+            </div>
+            
+            <div class="modal-field toggle-field" style="margin-top: 12px; display: flex; align-items: center; justify-content: space-between;">
+              <label for="toggleEnableSync" data-i18n="labelEnableSync" style="margin-bottom:0; cursor:pointer;">Tự động đồng bộ khi chấm công (Real-time)</label>
+              <input type="checkbox" id="toggleEnableSync" style="cursor:pointer; width:18px; height:18px;" />
+            </div>
+
+            <div style="margin-top: 14px; display: flex; align-items: center; gap: 10px;">
+              <button type="button" id="btnTestWebhookConnection" class="btn-sub btn-sm" data-i18n="btnTestConnection">Kiểm tra kết nối</button>
+              <span id="testConnectionStatus" style="font-size: 12px;"></span>
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn-sub" id="btnCancelSettingsModal" data-i18n="btnCancel">Huỷ</button>
+          <button type="submit" id="btnSubmitSettings" class="btn-primary" data-i18n="btnSaveSettings">Lưu cài đặt</button>
         </div>
       </form>
     </div>

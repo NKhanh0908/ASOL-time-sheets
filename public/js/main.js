@@ -1,6 +1,7 @@
 import { state } from "./state.js";
 import { currentLang, setLanguage } from "./i18n.js";
 import { initAdminAuth, checkAdminStatus } from "./modals/adminAuth.js";
+import { initSettingsModal } from "./modals/settingsModal.js";
 import { initChamCongTab, renderEmployeeSelect, renderDayEntries, updateEmpCount, onEmployeeOrDateChange } from "./tabs/chamCong.js";
 import { initLocChamCongTab, renderFilterEmployeeSelect, renderFilterResults } from "./tabs/locChamCong.js";
 import { initNhanVienTab, loadEmployees, renderEmployeeList } from "./tabs/nhanVien.js";
@@ -85,6 +86,7 @@ function initLanguageSwitcher() {
     initTabNavigation();
     initLanguageSwitcher();
     initAdminAuth(onAdminStateChange);
+    initSettingsModal();
     initChamCongTab(onTimesheetDataChanged);
     initLocChamCongTab(onTimesheetDataChanged);
     initNhanVienTab(onEmployeeDataChanged);
