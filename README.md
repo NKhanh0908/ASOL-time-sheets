@@ -77,6 +77,19 @@ docker build -t timesheet-app .
 docker run -d -p 3000:3000 -v $(pwd)/data:/app/data --name timesheet timesheet-app
 ```
 
+### 4. Tích Hợp Đồng Bộ Google Spreadsheet (Google Sheet Sync)
+
+1. Mở hoặc tạo một Google Spreadsheet mới.
+2. Vào menu **Tiện ích mở rộng (Extensions)** $\rightarrow$ **Apps Script**.
+3. Copy toàn bộ code trong file [`scripts/google_apps_script.js`](scripts/google_apps_script.js) dán vào trình soạn thảo Apps Script.
+4. Bấm **Triển khai (Deploy)** $\rightarrow$ **Tùy chọn triển khai mới (New deployment)**:
+   - Loại: **Web app**
+   - Thực thi với tư cách: **Tôi (Me)**
+   - Ai có quyền truy cập: **Bất kỳ ai (Anyone)**
+5. Copy URL Web app vừa tạo.
+6. Đăng nhập Admin trong Timesheet App $\rightarrow$ Bấm nút **⚙️ Cài đặt** $\rightarrow$ Dán URL và bấm **"Kiểm tra kết nối"** $\rightarrow$ Bấm **"Lưu cài đặt"** (hoặc cấu hình biến `GOOGLE_SHEET_WEBHOOK_URL` trong file `.env`).
+7. Ứng dụng sẽ tự động đồng bộ realtime khi có lượt chấm công, hoặc bấm nút **"📤 Đồng bộ Google Sheet"** trong tab Tổng hợp để sync trọn gói theo tháng.
+
 ---
 
 ## 🧪 Kiểm Thử Tự Động (Automated Testing)
@@ -91,3 +104,5 @@ Test suite kiểm tra tự động:
 - Logic trừ 1h30 nghỉ trưa (`> 5h`).
 - Chống ghi nhận trùng lặp ngày công.
 - Tính toán KPI thống kê và thuật toán phân trang.
+- Đồng bộ dữ liệu Google Sheet Webhook & tổng hợp tháng.
+

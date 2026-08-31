@@ -6,7 +6,7 @@
   "main": "server.js",
   "scripts": {
     "start": "node server.js",
-    "test": "node test/test_api.js && node test/test_e2e_calc.js"
+    "test": "node test/test_api.js && node test/test_e2e_calc.js && node test/test_sync.js"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.45.4",
