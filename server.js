@@ -395,7 +395,103 @@ const db = {
 app.use(express.json());
 app.use(express.static(path.join(__dirname, "public")));
 
-// ---------- Admin Authentication Endpoints ----------
+// ---------- Authentication Endpoints ----------
+app.post("/api/auth/login", async (req, res) => {
+  try {
+    const { role = "employee", code, password } = req.body || {};
+    if (!password) {
+      return res.status(400).json({ error: "Vui lòng nhập mật khẩu" });
+    }
+
+    if (role === "admin") {
+      let authSetting = await db.getSetting("admin_auth");
+      if (!authSetting || !authSetting.hash) {
+        const { hash, salt } = hashPassword("admin123");
+        authSetting = { hash, salt, updated_at: new Date().toISOString() };
+        await db.setSetting("admin_auth", authSetting);
+      }
+      if (!verifyPassword(password, authSetting.hash, authSetting.salt)) {
+        return res.status(401).json({ error: "Mật khẩu quản trị không chính xác" });
+      }
+      const user = { role: "admin" };
+      const token = generateAuthToken(user);
+      return res.json({ token, user });
+    }
+
+    // Employee Login
+    if (!code) {
+      return res.status(400).json({ error: "Vui lòng nhập mã nhân viên" });
+    }
+    const cleanCode = String(code).trim().toUpperCase();
+    const employee = await db.getEmployeeByCode(cleanCode);
+    if (!employee) {
+      return res.status(401).json({ error: "Mã nhân viên hoặc mật khẩu không chính xác" });
+    }
+
+    const isValid = verifyPassword(password, employee.password_hash, employee.salt);
+    if (!isValid) {
+      return res.status(401).json({ error: "Mã nhân viên hoặc mật khẩu không chính xác" });
+    }
+
+    const user = {
+      role: "employee",
+      id: employee.id,
+      code: employee.code,
+      name: employee.name,
+    };
+    const token = generateAuthToken(user);
+    return res.json({ token, user });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.get("/api/auth/me", requireAuth, (req, res) => {
+  res.json({ user: req.user });
+});
+
+app.post("/api/auth/change-password", requireAuth, async (req, res) => {
+  try {
+    const { currentPassword, newPassword } = req.body || {};
+    if (!currentPassword || !newPassword) {
+      return res.status(400).json({ error: "Thiếu mật khẩu hiện tại hoặc mật khẩu mới" });
+    }
+    if (newPassword.length < 6) {
+      return res.status(400).json({ error: "Mật khẩu mới phải có ít nhất 6 ký tự" });
+    }
+
+    if (req.user.role === "admin") {
+      let authSetting = await db.getSetting("admin_auth");
+      if (!authSetting || !authSetting.hash) {
+        const init = hashPassword("admin123");
+        authSetting = { hash: init.hash, salt: init.salt, updated_at: new Date().toISOString() };
+        await db.setSetting("admin_auth", authSetting);
+      }
+      if (!verifyPassword(currentPassword, authSetting.hash, authSetting.salt)) {
+        return res.status(400).json({ error: "Mật khẩu hiện tại không đúng" });
+      }
+      const { hash, salt } = hashPassword(newPassword);
+      await db.setSetting("admin_auth", { hash, salt, updated_at: new Date().toISOString() });
+      return res.json({ success: true, message: "Đổi mật khẩu Admin thành công!" });
+    }
+
+    // Employee password change
+    const employee = await db.getEmployeeById(req.user.id);
+    if (!employee) {
+      return res.status(404).json({ error: "Không tìm thấy thông tin nhân viên" });
+    }
+    if (!verifyPassword(currentPassword, employee.password_hash, employee.salt)) {
+      return res.status(400).json({ error: "Mật khẩu hiện tại không đúng" });
+    }
+    const { hash, salt } = hashPassword(newPassword);
+    await db.updateEmployee(req.user.id, { password_hash: hash, salt });
+    return res.json({ success: true, message: "Đổi mật khẩu thành công!" });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// ---------- Legacy Admin Authentication Endpoints (Backward Compatible) ----------
 app.post("/api/admin/login", async (req, res) => {
   try {
     const { password } = req.body || {};

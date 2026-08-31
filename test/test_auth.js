@@ -1,11 +1,31 @@
 process.env.NODE_ENV = "test";
 const assert = require("assert");
+const http = require("http");
 const app = require("../server.js");
+
+function makeRequest(server, options, bodyData = null) {
+  return new Promise((resolve, reject) => {
+    const req = http.request(options, (res) => {
+      let data = "";
+      res.on("data", (chunk) => (data += chunk));
+      res.on("end", () => {
+        try {
+          const json = data ? JSON.parse(data) : {};
+          resolve({ status: res.statusCode, headers: res.headers, body: json });
+        } catch {
+          resolve({ status: res.statusCode, headers: res.headers, raw: data });
+        }
+      });
+    });
+    req.on("error", reject);
+    if (bodyData) req.write(JSON.stringify(bodyData));
+    req.end();
+  });
+}
 
 async function testMigrationAndLookup() {
   console.log("▶ Testing Employee Migration and DB Helpers...");
 
-  // Test migrateEmployeeList helper with legacy records
   const legacyEmployees = [
     { id: "legacy-1", name: "Nguyễn Văn A" },
     { id: "legacy-2", name: "Trần Thị B" },
@@ -55,14 +75,100 @@ async function testTokenAndMiddleware() {
   console.log("✔ Tokens & Middleware passed!");
 }
 
+async function testAuthEndpoints() {
+  console.log("▶ Testing Auth Endpoints (login, me, change-password)...");
+  const server = http.createServer(app);
+  await new Promise((resolve) => server.listen(0, resolve));
+  const port = server.address().port;
+
+  try {
+    const initHashed = app.hashPassword("NVTEST123456");
+    const emp = await app.db.createEmployee({
+      code: "NVTEST",
+      name: "Test Auth User",
+      password_hash: initHashed.hash,
+      salt: initHashed.salt,
+    });
+
+    // 1. Employee Login with credentials
+    const empLoginRes = await makeRequest(server, {
+      hostname: "127.0.0.1",
+      port,
+      path: "/api/auth/login",
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+    }, { role: "employee", code: "NVTEST", password: "NVTEST123456" });
+
+    assert.strictEqual(empLoginRes.status, 200);
+    assert.ok(empLoginRes.body.token, "Should return session token");
+    assert.strictEqual(empLoginRes.body.user.role, "employee");
+    assert.strictEqual(empLoginRes.body.user.code, "NVTEST");
+    const empToken = empLoginRes.body.token;
+
+    // 2. GET /api/auth/me with employee token
+    const meRes = await makeRequest(server, {
+      hostname: "127.0.0.1",
+      port,
+      path: "/api/auth/me",
+      method: "GET",
+      headers: { Authorization: `Bearer ${empToken}` },
+    });
+    assert.strictEqual(meRes.status, 200);
+    assert.strictEqual(meRes.body.user.code, "NVTEST");
+
+    // 3. Employee Change Password
+    const changePassRes = await makeRequest(server, {
+      hostname: "127.0.0.1",
+      port,
+      path: "/api/auth/change-password",
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${empToken}`,
+      },
+    }, { currentPassword: "NVTEST123456", newPassword: "newpassword123" });
+    assert.strictEqual(changePassRes.status, 200);
+    assert.strictEqual(changePassRes.body.success, true);
+
+    // 4. Employee Login with New Password
+    const newLoginRes = await makeRequest(server, {
+      hostname: "127.0.0.1",
+      port,
+      path: "/api/auth/login",
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+    }, { role: "employee", code: "NVTEST", password: "newpassword123" });
+    assert.strictEqual(newLoginRes.status, 200);
+
+    // 5. Admin Login
+    const adminLoginRes = await makeRequest(server, {
+      hostname: "127.0.0.1",
+      port,
+      path: "/api/auth/login",
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+    }, { role: "admin", password: "admin123" });
+    assert.strictEqual(adminLoginRes.status, 200);
+    assert.strictEqual(adminLoginRes.body.user.role, "admin");
+
+    // Clean up test employee
+    await app.db.deleteEmployee(emp.id);
+
+    console.log("✔ Auth Endpoints passed!");
+  } finally {
+    server.close();
+  }
+}
+
 if (require.main === module) {
   (async () => {
     await testMigrationAndLookup();
     await testTokenAndMiddleware();
+    await testAuthEndpoints();
   })().catch((err) => {
     console.error(err);
     process.exit(1);
   });
 }
 
-module.exports = { testMigrationAndLookup, testTokenAndMiddleware };
+module.exports = { testMigrationAndLookup, testTokenAndMiddleware, testAuthEndpoints };
