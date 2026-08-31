@@ -75,12 +75,58 @@ function requireAdmin(req, res, next) {
   next();
 }
 
+// ---------- Employee Migration Helper ----------
+function migrateEmployeeList(employees = []) {
+  let counter = 1;
+  const usedCodes = new Set(employees.map((e) => (e.code || "").toUpperCase()).filter(Boolean));
+
+  return employees.map((emp) => {
+    let code = emp.code;
+    if (!code) {
+      while (usedCodes.has(`NV${String(counter).padStart(2, "0")}`)) {
+        counter++;
+      }
+      code = `NV${String(counter).padStart(2, "0")}`;
+      usedCodes.add(code);
+      counter++;
+    }
+
+    let { password_hash, salt } = emp;
+    if (!password_hash || !salt) {
+      const defaultPass = `${code}123456`;
+      const hashed = hashPassword(defaultPass);
+      password_hash = hashed.hash;
+      salt = hashed.salt;
+    }
+
+    return {
+      ...emp,
+      code,
+      password_hash,
+      salt,
+      created_at: emp.created_at || new Date().toISOString(),
+    };
+  });
+}
+
 // ---------- Local JSON DB Helpers ----------
 function loadLocalDB() {
   try {
     const data = JSON.parse(fs.readFileSync(DATA_FILE, "utf8"));
+    const rawEmployees = data.employees || [];
+    const migratedEmployees = migrateEmployeeList(rawEmployees);
+
+    // If any employee was migrated, save back to file
+    const needsMigration = rawEmployees.some(
+      (e, idx) => !e.code || !e.password_hash || !e.salt || e.code !== migratedEmployees[idx]?.code
+    );
+    if (needsMigration) {
+      data.employees = migratedEmployees;
+      saveLocalDB(data);
+    }
+
     return {
-      employees: data.employees || [],
+      employees: migratedEmployees,
       entries: data.entries || [],
       settings: data.settings || {},
     };
@@ -132,18 +178,69 @@ const db = {
     return loadLocalDB().employees;
   },
 
-  async createEmployee(name) {
-    const id = crypto.randomUUID();
+  async getEmployeeById(id) {
     if (isSupabase) {
-      const { data, error } = await supabase.from("employees").insert([{ id, name }]).select().single();
+      const { data, error } = await supabase.from("employees").select("*").eq("id", id).maybeSingle();
+      if (error) throw error;
+      return data || null;
+    }
+    const local = loadLocalDB();
+    return local.employees.find((e) => e.id === id) || null;
+  },
+
+  async getEmployeeByCode(code) {
+    const cleanCode = String(code || "").trim().toUpperCase();
+    if (isSupabase) {
+      const { data, error } = await supabase.from("employees").select("*").ilike("code", cleanCode).maybeSingle();
+      if (error) throw error;
+      return data || null;
+    }
+    const local = loadLocalDB();
+    return local.employees.find((e) => (e.code || "").toUpperCase() === cleanCode) || null;
+  },
+
+  async createEmployee(employeeInput) {
+    const id = crypto.randomUUID();
+    let empData;
+    if (typeof employeeInput === "string") {
+      const name = employeeInput.trim();
+      const defaultPass = "NV01123456";
+      const { hash, salt } = hashPassword(defaultPass);
+      empData = { id, code: "NV01", name, password_hash: hash, salt, created_at: new Date().toISOString() };
+    } else {
+      empData = {
+        id,
+        code: employeeInput.code,
+        name: employeeInput.name,
+        password_hash: employeeInput.password_hash,
+        salt: employeeInput.salt,
+        created_at: new Date().toISOString(),
+      };
+    }
+
+    if (isSupabase) {
+      const { data, error } = await supabase.from("employees").insert([empData]).select().single();
       if (error) throw error;
       return data;
     }
     const local = loadLocalDB();
-    const emp = { id, name };
-    local.employees.push(emp);
+    local.employees.push(empData);
     saveLocalDB(local);
-    return emp;
+    return empData;
+  },
+
+  async updateEmployee(id, patch) {
+    if (isSupabase) {
+      const { data, error } = await supabase.from("employees").update(patch).eq("id", id).select().single();
+      if (error) throw error;
+      return data;
+    }
+    const local = loadLocalDB();
+    const index = local.employees.findIndex((e) => e.id === id);
+    if (index === -1) return null;
+    local.employees[index] = { ...local.employees[index], ...patch };
+    saveLocalDB(local);
+    return local.employees[index];
   },
 
   async deleteEmployee(id) {
@@ -759,5 +856,6 @@ app.buildSyncEntryPayload = buildSyncEntryPayload;
 app.aggregateMonthSummary = aggregateMonthSummary;
 app.getEffectiveWebhookConfig = getEffectiveWebhookConfig;
 app.sendGoogleSheetWebhook = sendGoogleSheetWebhook;
+app.migrateEmployeeList = migrateEmployeeList;
 
 module.exports = app;

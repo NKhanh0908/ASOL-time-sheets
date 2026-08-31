@@ -6,9 +6,13 @@
 -- 1. Bảng Nhân viên (employees)
 create table if not exists public.employees (
   id text primary key,
+  code text unique not null,
   name text not null,
+  password_hash text not null,
+  salt text not null,
   created_at timestamp with time zone default timezone('utc'::text, now()) not null
 );
+create index if not exists idx_employees_code on public.employees(code);
 
 -- 2. Bảng Chấm công (entries)
 create table if not exists public.entries (
