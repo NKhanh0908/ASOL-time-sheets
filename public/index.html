@@ -27,9 +27,9 @@
         <!-- User Controls on Header -->
         <div id="userControls" class="user-controls" style="display:none;">
           <span id="userBadge" class="badge-user"></span>
-          <button type="button" id="btnOpenSettingsModal" class="btn-sub btn-sm admin-only" data-i18n="settingsModalTitle" title="Cài đặt">⚙️ Cài đặt</button>
-          <button type="button" id="btnOpenChangePassModal" class="btn-sub btn-sm" data-i18n="btnChangePass">🔑 Đổi MK</button>
-          <button type="button" id="btnLogoutUser" class="btn-sub btn-sm" data-i18n="btnLogout">🚪 Đăng xuất</button>
+          <button type="button" id="btnOpenSettingsModal" class="btn-sub btn-sm admin-only" data-i18n="settingsModalTitle" title="Cài đặt">Cài đặt</button>
+          <button type="button" id="btnOpenChangePassModal" class="btn-sub btn-sm" data-i18n="btnChangePass">Đổi MK</button>
+          <button type="button" id="btnLogoutUser" class="btn-sub btn-sm" data-i18n="btnLogout">Đăng xuất</button>
         </div>
 
         <div class="emp-count" id="empCount">0 nhân viên</div>
@@ -296,8 +296,14 @@
       </div>
 
       <div class="login-gate-tabs">
-        <button type="button" class="gate-tab-btn active" id="btnGateTabEmployee" data-i18n="tabLoginEmployee">👤 Nhân viên</button>
-        <button type="button" class="gate-tab-btn" id="btnGateTabAdmin" data-i18n="tabLoginAdmin">👑 Quản trị viên</button>
+        <button type="button" class="gate-tab-btn active" id="btnGateTabEmployee">
+          <img src="assets/svg/employee.svg" class="icon-svg icon-tab" alt="" />
+          <span data-i18n="tabLoginEmployee">Nhân viên</span>
+        </button>
+        <button type="button" class="gate-tab-btn" id="btnGateTabAdmin">
+          <img src="assets/svg/admin.svg" class="icon-svg icon-tab" alt="" />
+          <span data-i18n="tabLoginAdmin">Quản trị viên</span>
+        </button>
       </div>
 
       <!-- Employee Login Form -->

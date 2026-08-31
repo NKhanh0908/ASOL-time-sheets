@@ -21,10 +21,10 @@ export function updateTopbarUserUI(onAuthStateChange) {
     if (userControls) userControls.style.display = "flex";
     if (userBadge) {
       if (state.isAdmin) {
-        userBadge.textContent = "👑 Admin";
+        userBadge.innerHTML = `<img src="assets/svg/admin.svg" class="icon-svg-xs" alt="" /> <span>Admin</span>`;
         userBadge.className = "badge-user badge-admin";
       } else {
-        userBadge.textContent = `👤 [${state.currentUser.code}] ${state.currentUser.name}`;
+        userBadge.innerHTML = `<img src="assets/svg/employee.svg" class="icon-svg-xs" alt="" /> <span>[${state.currentUser.code}] ${state.currentUser.name}</span>`;
         userBadge.className = "badge-user badge-employee";
       }
     }

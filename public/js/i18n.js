@@ -97,8 +97,8 @@ export const dict = {
 
     // Auth & Scoped Keys
     loginGateTitle: "Đăng nhập Hệ thống Chấm công",
-    tabLoginEmployee: "👤 Nhân viên",
-    tabLoginAdmin: "👑 Quản trị viên",
+    tabLoginEmployee: "Nhân viên",
+    tabLoginAdmin: "Quản trị viên",
     labelEmployeeCode: "Mã nhân viên:",
     phEmployeeCode: "Ví dụ: NV01",
     labelEmployeePassword: "Mật khẩu:",
@@ -217,8 +217,8 @@ export const dict = {
 
     // Auth & Scoped Keys
     loginGateTitle: "Timesheet System Login",
-    tabLoginEmployee: "👤 Employee",
-    tabLoginAdmin: "👑 Administrator",
+    tabLoginEmployee: "Employee",
+    tabLoginAdmin: "Administrator",
     labelEmployeeCode: "Employee Code:",
     phEmployeeCode: "e.g. NV01",
     labelEmployeePassword: "Password:",
