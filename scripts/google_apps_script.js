@@ -2,6 +2,14 @@
  * Google Apps Script Web App for ASOL Timesheet Sync
  * Deploy as Web App: Execute as "Me", Who has access: "Anyone"
  */
+function doGet(e) {
+  return jsonResponse({
+    status: "success",
+    message: "ASOL Timesheet Sync Web App is running!",
+    timestamp: new Date().toISOString(),
+  });
+}
+
 function doPost(e) {
   try {
     const contents = e.postData && e.postData.contents ? JSON.parse(e.postData.contents) : {};
