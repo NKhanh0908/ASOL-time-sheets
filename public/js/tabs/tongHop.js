@@ -1,7 +1,8 @@
 import { state } from "../state.js";
 import { t } from "../i18n.js";
 import { todayStr, monthKeyOf, hoursBetween, fmtHours, monthLabel } from "../utils/time.js";
-import { showToast } from "../utils/ui.js";
+import { showToast, setBtnLoading } from "../utils/ui.js";
+import { syncMonthToGoogleSheets } from "../api.js";
 import { ensureMonthLoaded } from "./chamCong.js";
 
 export async function renderSummary() {
@@ -59,8 +60,25 @@ export async function renderSummary() {
 
 export function initTongHopTab() {
   const monthInput = document.getElementById("monthInput");
+  const btnSync = document.getElementById("btnSyncMonthSheet");
+
   if (monthInput && !monthInput.value) {
     monthInput.value = monthKeyOf(todayStr());
   }
   monthInput?.addEventListener("change", renderSummary);
+
+  btnSync?.addEventListener("click", async () => {
+    const mk = monthInput?.value || monthKeyOf(todayStr());
+    if (!mk) return;
+
+    setBtnLoading(btnSync, true, t("syncingMonth"));
+    try {
+      const res = await syncMonthToGoogleSheets(mk);
+      showToast(res.message || t("syncMonthSuccess"), "success");
+    } catch (err) {
+      showToast(err.message, "error");
+    } finally {
+      setBtnLoading(btnSync, false);
+    }
+  });
 }
