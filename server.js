@@ -40,39 +40,61 @@ function verifyPassword(password, storedHash, salt) {
   }
 }
 
-function generateAdminToken() {
-  const payload = {
-    role: "admin",
+function generateAuthToken(payload) {
+  const tokenPayload = {
+    ...payload,
     exp: Date.now() + 7 * 24 * 60 * 60 * 1000, // 7 ngày
   };
-  const payloadB64 = Buffer.from(JSON.stringify(payload)).toString("base64");
+  const payloadB64 = Buffer.from(JSON.stringify(tokenPayload)).toString("base64");
   const sig = crypto.createHmac("sha256", JWT_SECRET).update(payloadB64).digest("hex");
   return `${payloadB64}.${sig}`;
 }
 
-function verifyAdminToken(token) {
+function verifyAuthToken(token) {
   if (!token || typeof token !== "string" || !token.includes(".")) return false;
   const [payloadB64, sig] = token.split(".");
   const expectedSig = crypto.createHmac("sha256", JWT_SECRET).update(payloadB64).digest("hex");
   if (sig !== expectedSig) return false;
   try {
     const payload = JSON.parse(Buffer.from(payloadB64, "base64").toString("utf8"));
-    return payload.exp > Date.now() && payload.role === "admin";
+    if (payload.exp && payload.exp <= Date.now()) return false;
+    return payload;
   } catch {
     return false;
   }
 }
 
-function requireAdmin(req, res, next) {
+// Backward compatibility wrappers for existing code
+function generateAdminToken() {
+  return generateAuthToken({ role: "admin" });
+}
+
+function verifyAdminToken(token) {
+  const payload = verifyAuthToken(token);
+  return Boolean(payload && payload.role === "admin");
+}
+
+function requireAuth(req, res, next) {
   const authHeader = req.headers.authorization;
   if (!authHeader || !authHeader.startsWith("Bearer ")) {
-    return res.status(401).json({ error: "Yêu cầu quyền quản trị viên (Admin)" });
+    return res.status(401).json({ error: "Yêu cầu đăng nhập để tiếp tục" });
   }
   const token = authHeader.split(" ")[1];
-  if (!verifyAdminToken(token)) {
-    return res.status(401).json({ error: "Phiên làm việc của Admin đã hết hạn hoặc không hợp lệ" });
+  const user = verifyAuthToken(token);
+  if (!user) {
+    return res.status(401).json({ error: "Phiên đăng nhập đã hết hạn hoặc không hợp lệ" });
   }
+  req.user = user;
   next();
+}
+
+function requireAdmin(req, res, next) {
+  requireAuth(req, res, () => {
+    if (req.user.role !== "admin") {
+      return res.status(403).json({ error: "Yêu cầu quyền quản trị viên (Admin)" });
+    }
+    next();
+  });
 }
 
 // ---------- Employee Migration Helper ----------
@@ -850,6 +872,9 @@ app.hashPassword = hashPassword;
 app.verifyPassword = verifyPassword;
 app.generateAdminToken = generateAdminToken;
 app.verifyAdminToken = verifyAdminToken;
+app.generateAuthToken = generateAuthToken;
+app.verifyAuthToken = verifyAuthToken;
+app.requireAuth = requireAuth;
 app.requireAdmin = requireAdmin;
 app.calculateWorkHours = calculateWorkHours;
 app.buildSyncEntryPayload = buildSyncEntryPayload;
