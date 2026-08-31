@@ -1012,6 +1012,249 @@ body:not(.is-admin) .admin-only {
   cursor: not-allowed;
 }
 
+/* ============================================================
+   Login Gate & User Authentication Styles
+   ============================================================ */
+.login-gate-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(26, 23, 20, 0.75);
+  backdrop-filter: blur(5px);
+  -webkit-backdrop-filter: blur(5px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 99999;
+  padding: 16px;
+  animation: fadeIn 0.25s ease-out;
+}
+
+.login-gate-card {
+  background: var(--paper, #fdfbf7);
+  border: 2px solid var(--ink, #1a1714);
+  border-radius: 10px;
+  width: 100%;
+  max-width: 420px;
+  padding: 28px 24px;
+  box-shadow: 6px 6px 0px rgba(0, 0, 0, 0.25);
+}
+
+.login-gate-header {
+  text-align: center;
+  margin-bottom: 20px;
+}
+
+.login-logo {
+  max-height: 48px;
+  margin-bottom: 8px;
+}
+
+.login-gate-header h2 {
+  font-family: var(--font-display);
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--ink);
+  margin: 0;
+}
+
+.login-gate-tabs {
+  display: flex;
+  border-bottom: 2px solid var(--line, #e2ded4);
+  margin-bottom: 18px;
+}
+
+.gate-tab-btn {
+  flex: 1;
+  background: none;
+  border: none;
+  padding: 10px;
+  font-family: var(--font-display);
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--ink-soft);
+  cursor: pointer;
+  border-bottom: 3px solid transparent;
+  margin-bottom: -2px;
+  transition: all 0.15s ease;
+}
+
+.gate-tab-btn.active {
+  color: var(--ink);
+  border-bottom-color: var(--ink);
+}
+
+.gate-form {
+  display: none;
+}
+
+.gate-form.active {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.gate-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.gate-field label {
+  font-family: var(--font-display);
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--ink);
+}
+
+.gate-field input {
+  padding: 10px 12px;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  font-size: 14px;
+  background: white;
+  font-family: inherit;
+}
+
+.gate-field input:focus {
+  outline: none;
+  border-color: var(--ink);
+}
+
+.gate-form-footer {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: -4px;
+}
+
+.forgot-pass-link {
+  font-size: 12px;
+  color: var(--ink-soft);
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+.forgot-pass-link:hover {
+  color: var(--ink);
+}
+
+.btn-block {
+  width: 100%;
+  padding: 10px;
+  font-size: 14px;
+  margin-top: 6px;
+}
+
+/* User Controls in Topbar */
+.user-controls {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.badge-user {
+  display: inline-flex;
+  align-items: center;
+  padding: 4px 10px;
+  border-radius: 4px;
+  font-family: var(--font-display);
+  font-size: 12px;
+  font-weight: 600;
+  border: 1px solid;
+}
+
+.badge-user.badge-admin {
+  background: #fef08a;
+  border-color: #eab308;
+  color: #854d0e;
+}
+
+.badge-user.badge-employee {
+  background: #dbeafe;
+  border-color: #93c5fd;
+  color: #1e40af;
+}
+
+.badge-code {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 700;
+  background: var(--paper-deep, #ebe6db);
+  color: var(--ink);
+  padding: 2px 6px;
+  border-radius: 4px;
+  border: 1px solid var(--line);
+}
+
+/* Employee Tab Grid & List Styles */
+.emp-form {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 20px;
+  background: white;
+  padding: 14px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+}
+
+.emp-form-grid {
+  display: grid;
+  grid-template-columns: 110px 1fr 200px;
+  gap: 12px;
+  align-items: flex-end;
+}
+
+.emp-field {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.emp-field label {
+  font-family: var(--font-display);
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--ink);
+}
+
+.emp-field input {
+  padding: 8px 10px;
+  border: 1px solid var(--line);
+  border-radius: 5px;
+  font-size: 13px;
+}
+
+.pass-input-row {
+  display: flex;
+  gap: 4px;
+}
+
+.pass-input-row input {
+  flex: 1;
+}
+
+.emp-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 14px;
+  background: white;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+}
+
+.emp-row-info {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.emp-row-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
 @media (max-width: 640px) {
   .topbar { flex-direction: column; align-items: flex-start; gap: 12px; }
   .topbar-right { align-self: flex-end; }
@@ -1021,4 +1264,6 @@ body:not(.is-admin) .admin-only {
   .summary-row { grid-template-columns: 1.5fr 1fr 1fr 0.8fr; font-size: 12px; }
   .filter-grid { grid-template-columns: 1fr; }
   .kpi-grid { grid-template-columns: 1fr; }
+  .emp-form-grid { grid-template-columns: 1fr; }
+  .hide-mobile { display: none; }
 }

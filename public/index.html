@@ -24,15 +24,12 @@
           <button type="button" id="langEn" class="lang-btn">EN</button>
         </div>
         
-        <!-- Admin Controls on Header -->
-        <div id="guestControls" class="guest-controls">
-          <button type="button" id="btnOpenLoginModal" class="btn-sub btn-sm">🔐 <span data-i18n="adminLogin">Admin</span></button>
-        </div>
-        <div id="adminControls" class="admin-controls" style="display:none;">
-          <span class="badge-admin">👑 Admin</span>
-          <button type="button" id="btnOpenSettingsModal" class="btn-sub btn-sm" data-i18n="settingsModalTitle" title="Cài đặt">⚙️ Cài đặt</button>
-          <button type="button" id="btnOpenChangePassModal" class="btn-sub btn-sm" data-i18n="btnChangePass">Đổi MK</button>
-          <button type="button" id="btnLogoutAdmin" class="btn-sub btn-sm" data-i18n="btnLogout">Đăng xuất</button>
+        <!-- User Controls on Header -->
+        <div id="userControls" class="user-controls" style="display:none;">
+          <span id="userBadge" class="badge-user"></span>
+          <button type="button" id="btnOpenSettingsModal" class="btn-sub btn-sm admin-only" data-i18n="settingsModalTitle" title="Cài đặt">⚙️ Cài đặt</button>
+          <button type="button" id="btnOpenChangePassModal" class="btn-sub btn-sm" data-i18n="btnChangePass">🔑 Đổi MK</button>
+          <button type="button" id="btnLogoutUser" class="btn-sub btn-sm" data-i18n="btnLogout">🚪 Đăng xuất</button>
         </div>
 
         <div class="emp-count" id="empCount">0 nhân viên</div>
@@ -58,47 +55,64 @@
 
         <form id="entryForm" class="entry-form">
           <input type="hidden" id="entryIdInput" value="" />
-          <div class="form-row main-fields">
-            <select id="empSelect" required>
-              <option value="" data-i18n="selectEmployee">Nhân viên</option>
-            </select>
-            <select id="modeSelect">
-              <option value="Onsite">Onsite</option>
-              <option value="Remote">Remote</option>
-              <option value="Nghỉ" data-i18n="modeOff">Nghỉ</option>
-            </select>
+          
+          <div class="form-row-2col">
+            <div class="form-field">
+              <label for="empSelect" data-i18n="selectEmployee">Chọn nhân viên:</label>
+              <select id="empSelect" required>
+                <option value="" data-i18n="selectEmployee">Chọn nhân viên</option>
+              </select>
+            </div>
+
+            <div class="form-field">
+              <label for="modeSelect" data-i18n="filterLabelMode">Hình thức:</label>
+              <select id="modeSelect">
+                <option value="Onsite" data-i18n="modeOnsite">Onsite</option>
+                <option value="Remote" data-i18n="modeRemote">Remote</option>
+                <option value="Nghỉ" data-i18n="modeOff">Nghỉ</option>
+              </select>
+            </div>
           </div>
 
-          <div class="time-grid-simple" id="timeGrid">
-            <div class="time-field">
+          <div class="time-grid" id="timeGrid">
+            <div class="time-field-block">
               <label for="inTime" data-i18n="labelInTime">Giờ vào (Sáng)</label>
               <div class="time-input-wrap">
                 <input type="time" id="inTime" />
-                <button type="button" class="btn-now" data-target="inTime" title="Điền giờ hiện tại"><img src="assets/svg/fill.svg" class="icon-svg" alt="Fill" /></button>
+                <button type="button" class="btn-now" data-target="inTime" title="Điền giờ hiện tại">
+                  <img src="assets/svg/fill.svg" class="icon-svg" alt="" />
+                </button>
               </div>
             </div>
 
-            <div class="time-field">
+            <div class="time-field-block">
               <label for="outTime" data-i18n="labelOutTime">Giờ ra (Chiều)</label>
               <div class="time-input-wrap">
                 <input type="time" id="outTime" />
-                <button type="button" class="btn-now" data-target="outTime" title="Điền giờ hiện tại"><img src="assets/svg/fill.svg" class="icon-svg" alt="Fill" /></button>
+                <button type="button" class="btn-now" data-target="outTime" title="Điền giờ hiện tại">
+                  <img src="assets/svg/fill.svg" class="icon-svg" alt="" />
+                </button>
               </div>
             </div>
           </div>
 
-          <div class="form-row note-row">
-            <input
-              type="text"
+          <div class="form-field full-width">
+            <textarea
               id="noteInput"
-              class="full-width note-input"
+              rows="2"
               placeholder="Công việc hôm nay làm: ..."
               required
-            />
-            <div class="btn-actions">
-              <button type="button" id="btnResetForm" class="btn-sub" style="display:none;"><img src="assets/svg/reset.svg" class="icon-svg" alt="" /><span data-i18n="btnCancel">Huỷ</span></button>
-              <button type="submit" id="btnSubmitEntry" class="btn-primary" data-i18n="btnRecord">+ Ghi nhận</button>
-            </div>
+              data-i18n-ph="placeholderTask"
+            ></textarea>
+          </div>
+
+          <div class="form-actions">
+            <button type="button" id="btnResetForm" class="btn-sub" style="display:none;">
+              <span data-i18n="btnCancel">Huỷ</span>
+            </button>
+            <button type="submit" id="btnSubmitEntry" class="btn-primary">
+              <span data-i18n="btnCheckin">⚡ Điểm danh Vào</span>
+            </button>
           </div>
         </form>
 
@@ -110,22 +124,22 @@
       <section id="tab-loc-cham-cong" class="tab-content">
         <form id="filterForm" class="filter-form">
           <div class="filter-grid">
-            <div class="filter-field">
-              <label for="filterEmpSelect" data-i18n="filterLabelEmp">Nhân viên</label>
+            <div class="form-field">
+              <label for="filterEmpSelect" data-i18n="filterLabelEmp">Nhân viên:</label>
               <select id="filterEmpSelect">
                 <option value="" data-i18n="filterAllEmployees">-- Tất cả nhân viên --</option>
               </select>
             </div>
-            <div class="filter-field">
-              <label for="filterStartDate" data-i18n="filterLabelFromDate">Từ ngày</label>
+            <div class="form-field">
+              <label for="filterStartDate" data-i18n="filterLabelFromDate">Từ ngày:</label>
               <input type="date" id="filterStartDate" />
             </div>
-            <div class="filter-field">
-              <label for="filterEndDate" data-i18n="filterLabelToDate">Đến ngày</label>
+            <div class="form-field">
+              <label for="filterEndDate" data-i18n="filterLabelToDate">Đến ngày:</label>
               <input type="date" id="filterEndDate" />
             </div>
-            <div class="filter-field">
-              <label for="filterModeSelect" data-i18n="filterLabelMode">Hình thức</label>
+            <div class="form-field">
+              <label for="filterModeSelect" data-i18n="filterLabelMode">Hình thức:</label>
               <select id="filterModeSelect">
                 <option value="" data-i18n="filterAllModes">-- Tất cả hình thức --</option>
                 <option value="Onsite">Onsite</option>
@@ -163,8 +177,26 @@
       <!-- 3. TAB NHAN VIEN (Admin Only) -->
       <section id="tab-nhan-vien" class="tab-content admin-only">
         <form id="empForm" class="emp-form">
-          <input type="text" id="newEmpName" placeholder="Tên nhân viên mới" required data-i18n-ph="placeholderNewEmp" />
-          <button type="submit" id="btnAddEmpSubmit" class="btn-primary" data-i18n="btnAddEmp">+ Thêm</button>
+          <div class="emp-form-grid">
+            <div class="emp-field">
+              <label for="inputEmpCode" data-i18n="labelEmpCodeInput">Mã NV:</label>
+              <input type="text" id="inputEmpCode" placeholder="Tự động (NV..)" style="text-transform: uppercase;" />
+            </div>
+            <div class="emp-field emp-field-grow">
+              <label for="newEmpName" data-i18n="placeholderNewEmp">Họ và Tên:</label>
+              <input type="text" id="newEmpName" placeholder="Tên nhân viên mới" required data-i18n-ph="placeholderNewEmp" />
+            </div>
+            <div class="emp-field">
+              <label for="inputEmpPass" data-i18n="labelEmpPassInput">Mật khẩu khởi tạo:</label>
+              <div class="pass-input-row">
+                <input type="text" id="inputEmpPass" placeholder="Tự động sinh nếu trống" data-i18n-ph="phEmpPassInput" />
+                <button type="button" id="btnRandomEmpPass" class="btn-sub btn-sm" title="Sinh mật khẩu ngẫu nhiên">🎲</button>
+              </div>
+            </div>
+          </div>
+          <div class="form-actions" style="margin-top: 10px;">
+            <button type="submit" id="btnAddEmpSubmit" class="btn-primary" data-i18n="btnAddEmp">+ Thêm nhân viên</button>
+          </div>
         </form>
         <div id="empList" class="emp-list"></div>
       </section>
@@ -186,48 +218,26 @@
   </div>
 
   <!-- MODALS -->
-  <!-- 1. Admin Login Modal -->
-  <div id="modalAdminLogin" class="modal-backdrop" style="display:none;">
+  <!-- 1. Change Password Modal (Unified for Employee & Admin) -->
+  <div id="modalChangePass" class="modal-backdrop" style="display:none;">
     <div class="modal-box">
       <div class="modal-header">
-        <h3 data-i18n="modalLoginTitle">🔐 Đăng nhập Quản trị viên (Admin)</h3>
-        <button type="button" class="modal-close" id="btnCloseLoginModal">&times;</button>
-      </div>
-      <form id="formAdminLogin">
-        <div class="modal-body">
-          <div class="modal-field">
-            <label for="adminLoginPassword" data-i18n="labelAdminPass">Mật khẩu Admin:</label>
-            <input type="password" id="adminLoginPassword" placeholder="Nhập mật khẩu..." required />
-          </div>
-        </div>
-        <div class="modal-footer">
-          <button type="button" class="btn-sub" id="btnCancelLoginModal" data-i18n="btnCancel">Huỷ</button>
-          <button type="submit" id="btnSubmitAdminLogin" class="btn-primary" data-i18n="btnSubmitLogin">Đăng nhập</button>
-        </div>
-      </form>
-    </div>
-  </div>
-
-  <!-- 2. Admin Change Password Modal -->
-  <div id="modalAdminChangePass" class="modal-backdrop" style="display:none;">
-    <div class="modal-box">
-      <div class="modal-header">
-        <h3 data-i18n="modalChangePassTitle">🔑 Đổi mật khẩu Admin</h3>
+        <h3 data-i18n="modalChangePassTitle">🔑 Đổi mật khẩu</h3>
         <button type="button" class="modal-close" id="btnCloseChangePassModal">&times;</button>
       </div>
-      <form id="formAdminChangePass">
+      <form id="formChangePass">
         <div class="modal-body">
           <div class="modal-field">
             <label for="currentPassInput" data-i18n="labelCurrentPass">Mật khẩu hiện tại:</label>
-            <input type="password" id="currentPassInput" placeholder="Mật khẩu hiện tại..." required />
+            <input type="password" id="currentPassInput" placeholder="Mật khẩu hiện tại..." required autocomplete="current-password" />
           </div>
           <div class="modal-field">
             <label for="newPassInput" data-i18n="labelNewPass">Mật khẩu mới (tối thiểu 6 ký tự):</label>
-            <input type="password" id="newPassInput" placeholder="Mật khẩu mới..." minlength="6" required />
+            <input type="password" id="newPassInput" placeholder="Mật khẩu mới..." minlength="6" required autocomplete="new-password" />
           </div>
           <div class="modal-field">
             <label for="confirmPassInput" data-i18n="labelConfirmPass">Xác nhận mật khẩu mới:</label>
-            <input type="password" id="confirmPassInput" placeholder="Nhập lại mật khẩu mới..." minlength="6" required />
+            <input type="password" id="confirmPassInput" placeholder="Nhập lại mật khẩu mới..." minlength="6" required autocomplete="new-password" />
           </div>
         </div>
         <div class="modal-footer">
@@ -238,7 +248,7 @@
     </div>
   </div>
 
-  <!-- 3. Admin Settings Modal -->
+  <!-- 2. Admin Settings Modal -->
   <div id="modalSettings" class="modal-backdrop" style="display:none;">
     <div class="modal-box" style="max-width: 520px;">
       <div class="modal-header">
@@ -272,6 +282,47 @@
           <button type="button" class="btn-sub" id="btnCancelSettingsModal" data-i18n="btnCancel">Huỷ</button>
           <button type="submit" id="btnSubmitSettings" class="btn-primary" data-i18n="btnSaveSettings">Lưu cài đặt</button>
         </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- 3. Login Gate Fullscreen Overlay -->
+  <div id="loginGate" class="login-gate-overlay" style="display:none;">
+    <div class="login-gate-card">
+      <div class="login-gate-header">
+        <img src="assets/Logo_Full.png" alt="Logo" class="login-logo" />
+        <div class="eyebrow" style="margin-bottom: 4px;">ALPACA SOLUTIONS</div>
+        <h2 data-i18n="loginGateTitle">Đăng nhập Hệ thống Chấm công</h2>
+      </div>
+
+      <div class="login-gate-tabs">
+        <button type="button" class="gate-tab-btn active" id="btnGateTabEmployee" data-i18n="tabLoginEmployee">👤 Nhân viên</button>
+        <button type="button" class="gate-tab-btn" id="btnGateTabAdmin" data-i18n="tabLoginAdmin">👑 Quản trị viên</button>
+      </div>
+
+      <!-- Employee Login Form -->
+      <form id="formEmployeeLogin" class="gate-form active">
+        <div class="gate-field">
+          <label for="empLoginCode" data-i18n="labelEmployeeCode">Mã nhân viên:</label>
+          <input type="text" id="empLoginCode" placeholder="Ví dụ: NV01" style="text-transform: uppercase;" data-i18n-ph="phEmployeeCode" required autocomplete="username" />
+        </div>
+        <div class="gate-field">
+          <label for="empLoginPassword" data-i18n="labelEmployeePassword">Mật khẩu:</label>
+          <input type="password" id="empLoginPassword" placeholder="Nhập mật khẩu..." data-i18n-ph="phEmployeePassword" required autocomplete="current-password" />
+        </div>
+        <div class="gate-form-footer">
+          <a href="#" id="linkForgotPassword" class="forgot-pass-link" data-i18n="forgotPasswordLink">Quên mật khẩu?</a>
+        </div>
+        <button type="submit" id="btnSubmitEmpLogin" class="btn-primary btn-block" data-i18n="btnLoginSubmit">Đăng nhập</button>
+      </form>
+
+      <!-- Admin Login Form -->
+      <form id="formAdminLoginGate" class="gate-form">
+        <div class="gate-field">
+          <label for="adminGatePassword" data-i18n="labelAdminPass">Mật khẩu Admin:</label>
+          <input type="password" id="adminGatePassword" placeholder="Nhập mật khẩu..." data-i18n-ph="labelAdminPass" required autocomplete="current-password" />
+        </div>
+        <button type="submit" id="btnSubmitAdminGateLogin" class="btn-primary btn-block" data-i18n="btnLoginSubmit">Đăng nhập</button>
       </form>
     </div>
   </div>
