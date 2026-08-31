@@ -897,18 +897,30 @@ app.post("/api/sync/month", requireAdmin, async (req, res) => {
 });
 
 // ---------- Entries Endpoints ----------
-app.get("/api/entries", async (req, res) => {
+app.get("/api/entries", requireAuth, async (req, res) => {
   try {
-    const { month, employeeId, startDate, endDate, mode } = req.query;
-    const entries = await db.getEntries({ month, employeeId, startDate, endDate, mode });
+    let { month, employeeId, startDate, endDate, mode, date } = req.query;
+    // Enforce scoped employee filter if caller is an employee
+    if (req.user.role === "employee") {
+      employeeId = req.user.id;
+    }
+    const entries = await db.getEntries({ month, employeeId, startDate, endDate, mode, date });
     res.json(entries);
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
 });
 
-app.post("/api/entries", async (req, res) => {
-  const { date, employeeId, in: timeIn, out, mode, note } = req.body;
+app.post("/api/entries", requireAuth, async (req, res) => {
+  let { date, employeeId, in: timeIn, out, mode, note } = req.body;
+
+  if (req.user.role === "employee") {
+    if (employeeId && employeeId !== req.user.id) {
+      return res.status(403).json({ error: "Bạn chỉ có thể chấm công cho chính mình!" });
+    }
+    employeeId = req.user.id;
+  }
+
   const trimmedNote = (note || "").trim();
   if (!date || !employeeId || !mode || !trimmedNote) {
     return res.status(400).json({ error: "Thiếu ngày, nhân viên, hình thức hoặc ghi chú" });
@@ -930,7 +942,7 @@ app.post("/api/entries", async (req, res) => {
           note: trimmedNote || existing.note,
         };
         const updated = await db.updateEntry(existing.id, patch);
-        
+
         // Asynchronous non-blocking sync
         (async () => {
           try {
@@ -977,19 +989,29 @@ app.post("/api/entries", async (req, res) => {
   }
 });
 
-app.put("/api/entries/:id", async (req, res) => {
+app.put("/api/entries/:id", requireAuth, async (req, res) => {
   const { in: timeIn, out, mode, note } = req.body;
-  const patch = {};
-  if (timeIn !== undefined) patch.in = timeIn;
-  if (out !== undefined) patch.out = out;
-  if (mode !== undefined) patch.mode = mode;
-  if (note !== undefined) {
-    const trimmed = (note || "").trim();
-    if (trimmed) patch.note = trimmed;
-  }
   try {
+    const existingList = await db.getEntries();
+    const entryToUpdate = existingList.find((e) => e.id === req.params.id);
+    if (!entryToUpdate) {
+      return res.status(404).json({ error: "Không tìm thấy bản ghi" });
+    }
+
+    if (req.user.role === "employee" && entryToUpdate.employeeId !== req.user.id) {
+      return res.status(403).json({ error: "Bạn không có quyền sửa bản ghi của người khác" });
+    }
+
+    const patch = {};
+    if (timeIn !== undefined) patch.in = timeIn;
+    if (out !== undefined) patch.out = out;
+    if (mode !== undefined) patch.mode = mode;
+    if (note !== undefined) {
+      const trimmed = (note || "").trim();
+      if (trimmed) patch.note = trimmed;
+    }
+
     const updated = await db.updateEntry(req.params.id, patch);
-    if (!updated) return res.status(404).json({ error: "Không tìm thấy bản ghi" });
 
     // Asynchronous non-blocking sync
     (async () => {

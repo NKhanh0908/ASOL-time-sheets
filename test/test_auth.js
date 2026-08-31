@@ -237,12 +237,101 @@ async function testEmployeeManagement() {
   }
 }
 
+async function testScopedAccess() {
+  console.log("▶ Testing Scoped Timesheet Access Enforcement...");
+  const server = http.createServer(app);
+  await new Promise((resolve) => server.listen(0, resolve));
+  const port = server.address().port;
+
+  try {
+    const adminToken = app.generateAuthToken({ role: "admin" });
+    const emp1Token = app.generateAuthToken({ role: "employee", id: "emp-1", code: "NV01", name: "User 1" });
+    const emp2Token = app.generateAuthToken({ role: "employee", id: "emp-2", code: "NV02", name: "User 2" });
+
+    // 1. Employee 1 creates an entry
+    const createRes1 = await makeRequest(server, {
+      hostname: "127.0.0.1",
+      port,
+      path: "/api/entries",
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${emp1Token}`,
+      },
+    }, { date: "2026-08-31", employeeId: "emp-1", in: "08:30", mode: "Onsite", note: "Làm việc task auth" });
+    assert.strictEqual(createRes1.status, 200);
+    const entry1Id = createRes1.body.id;
+
+    // 2. Employee 1 tries to create an entry claiming to be Employee 2 (MUST BE REJECTED WITH 403)
+    const spoofRes = await makeRequest(server, {
+      hostname: "127.0.0.1",
+      port,
+      path: "/api/entries",
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${emp1Token}`,
+      },
+    }, { date: "2026-08-31", employeeId: "emp-2", in: "08:30", mode: "Onsite", note: "Spoofing" });
+    assert.strictEqual(spoofRes.status, 403);
+
+    // 3. Employee 2 queries entries -> Should NOT see Employee 1's entry
+    const emp2EntriesRes = await makeRequest(server, {
+      hostname: "127.0.0.1",
+      port,
+      path: "/api/entries?month=2026-08",
+      method: "GET",
+      headers: { Authorization: `Bearer ${emp2Token}` },
+    });
+    assert.strictEqual(emp2EntriesRes.status, 200);
+    assert.strictEqual(emp2EntriesRes.body.some((e) => e.id === entry1Id), false);
+
+    // 4. Employee 2 tries to update Employee 1's entry -> Must return 403
+    const emp2UpdateRes = await makeRequest(server, {
+      hostname: "127.0.0.1",
+      port,
+      path: `/api/entries/${entry1Id}`,
+      method: "PUT",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${emp2Token}`,
+      },
+    }, { out: "17:30" });
+    assert.strictEqual(emp2UpdateRes.status, 403);
+
+    // 5. Employee 1 tries to delete own entry -> Must be forbidden (Admin only)
+    const emp1DeleteRes = await makeRequest(server, {
+      hostname: "127.0.0.1",
+      port,
+      path: `/api/entries/${entry1Id}`,
+      method: "DELETE",
+      headers: { Authorization: `Bearer ${emp1Token}` },
+    });
+    assert.strictEqual(emp1DeleteRes.status, 403);
+
+    // 6. Admin deletes entry -> Succeeded
+    const adminDeleteRes = await makeRequest(server, {
+      hostname: "127.0.0.1",
+      port,
+      path: `/api/entries/${entry1Id}`,
+      method: "DELETE",
+      headers: { Authorization: `Bearer ${adminToken}` },
+    });
+    assert.strictEqual(adminDeleteRes.status, 200);
+
+    console.log("✔ Scoped Timesheet Access passed!");
+  } finally {
+    server.close();
+  }
+}
+
 if (require.main === module) {
   (async () => {
     await testMigrationAndLookup();
     await testTokenAndMiddleware();
     await testAuthEndpoints();
     await testEmployeeManagement();
+    await testScopedAccess();
   })().catch((err) => {
     console.error(err);
     process.exit(1);
@@ -254,4 +343,5 @@ module.exports = {
   testTokenAndMiddleware,
   testAuthEndpoints,
   testEmployeeManagement,
+  testScopedAccess,
 };
