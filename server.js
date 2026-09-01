@@ -558,10 +558,14 @@ function generateRandomPassword(prefix = "NV") {
   return `${prefix}${digits}`;
 }
 
-app.get("/api/employees", async (req, res) => {
+app.get("/api/employees", requireAuth, async (req, res) => {
   try {
     const list = await db.getEmployees();
     const sanitized = list.map(({ password_hash, salt, ...emp }) => emp);
+    if (req.user.role === "employee") {
+      const selfOnly = sanitized.filter((e) => e.id === req.user.id);
+      return res.json(selfOnly);
+    }
     res.json(sanitized);
   } catch (err) {
     res.status(500).json({ error: err.message });

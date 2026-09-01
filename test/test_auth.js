@@ -229,6 +229,42 @@ async function testEmployeeManagement() {
     }, { role: "employee", code: "TTS99", password: resetRes.body.generatedPassword });
     assert.strictEqual(loginResetRes.status, 200);
 
+    // 5. Verify GET /api/employees scoping and authentication
+    // 5a. Unauthenticated request -> 401
+    const unauthGetRes = await makeRequest(server, {
+      hostname: "127.0.0.1",
+      port,
+      path: "/api/employees",
+      method: "GET",
+    });
+    assert.strictEqual(unauthGetRes.status, 401, "Unauthenticated /api/employees should return 401");
+
+    // 5b. Employee token -> Only returns self
+    const empTokenForScoped = app.generateAuthToken({ role: "employee", id: newEmpId, code: "TTS99", name: "Thực tập sinh Test 99" });
+    const empGetRes = await makeRequest(server, {
+      hostname: "127.0.0.1",
+      port,
+      path: "/api/employees",
+      method: "GET",
+      headers: { Authorization: `Bearer ${empTokenForScoped}` },
+    });
+    assert.strictEqual(empGetRes.status, 200);
+    assert.strictEqual(Array.isArray(empGetRes.body), true);
+    assert.strictEqual(empGetRes.body.length, 1, "Employee should only see their own employee record");
+    assert.strictEqual(empGetRes.body[0].id, newEmpId);
+
+    // 5c. Admin token -> Returns all employees
+    const adminGetRes = await makeRequest(server, {
+      hostname: "127.0.0.1",
+      port,
+      path: "/api/employees",
+      method: "GET",
+      headers: { Authorization: `Bearer ${adminToken}` },
+    });
+    assert.strictEqual(adminGetRes.status, 200);
+    assert.ok(adminGetRes.body.length >= 1, "Admin should see full list");
+    assert.strictEqual(adminGetRes.body.some((e) => e.id === newEmpId), true);
+
     // Clean up
     await makeRequest(server, {
       hostname: "127.0.0.1",

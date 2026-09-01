@@ -1,9 +1,9 @@
 import { state } from "./state.js";
-import { currentLang, setLanguage } from "./i18n.js";
+import { currentLang, setLanguage, t } from "./i18n.js";
 import { initLoginGate } from "./modals/loginGate.js";
 import { initAdminAuth, checkAuthStatus, updateTopbarUserUI } from "./modals/adminAuth.js";
 import { initSettingsModal } from "./modals/settingsModal.js";
-import { initChamCongTab, renderEmployeeSelect, renderDayEntries, updateEmpCount, onEmployeeOrDateChange } from "./tabs/chamCong.js";
+import { initChamCongTab, renderEmployeeSelect, renderDayEntries, updateEmpCount, onEmployeeOrDateChange, resetFormState } from "./tabs/chamCong.js";
 import { initLocChamCongTab, renderFilterEmployeeSelect, renderFilterResults } from "./tabs/locChamCong.js";
 import { initNhanVienTab, loadEmployees, renderEmployeeList } from "./tabs/nhanVien.js";
 import { initTongHopTab, renderSummary } from "./tabs/tongHop.js";
@@ -45,12 +45,22 @@ function onLanguageChanged() {
 
 // Re-render callback when user logs in or logs out
 async function onAuthStateChanged(user) {
+  state.entriesCache = {};
+  state.filterData = {
+    items: [],
+    page: 1,
+    isLoaded: false,
+  };
+  state.timesheetPage = 1;
+  resetFormState();
+
   if (user) {
-    await loadEmployees(onEmployeeDataChanged);
+    await loadEmployees();
     renderEmployeeSelect();
     renderFilterEmployeeSelect();
     await renderDayEntries(onTimesheetDataChanged);
     await renderSummary();
+    onEmployeeOrDateChange();
     if (state.filterData.isLoaded) {
       renderFilterResults(onTimesheetDataChanged);
     }
@@ -58,7 +68,18 @@ async function onAuthStateChanged(user) {
     state.employees = [];
     renderEmployeeSelect();
     renderFilterEmployeeSelect();
-    renderDayEntries(onTimesheetDataChanged);
+    const entryList = document.getElementById("entryList");
+    if (entryList) entryList.innerHTML = `<div class="empty-state">${t("emptyDay")}</div>`;
+    const pag = document.getElementById("timesheetPagination");
+    if (pag) pag.innerHTML = "";
+    const filterList = document.getElementById("filterEntryList");
+    if (filterList) filterList.innerHTML = "";
+    const filterKpis = document.getElementById("filterKpis");
+    if (filterKpis) filterKpis.style.display = "none";
+    const summaryTable = document.getElementById("summaryTable");
+    if (summaryTable) summaryTable.innerHTML = `<div class="empty-state">${t("emptySummary")}</div>`;
+    const empList = document.getElementById("empList");
+    if (empList) empList.innerHTML = `<div class="empty-state">${t("emptyEmp")}</div>`;
   }
 }
 
@@ -99,9 +120,8 @@ function initLanguageSwitcher() {
   try {
     initTabNavigation();
     initLanguageSwitcher();
-    initLoginGate(async (user) => {
+    initLoginGate(async () => {
       updateTopbarUserUI(onAuthStateChanged);
-      await onAuthStateChanged(user);
     });
     initAdminAuth(onAuthStateChanged);
     initSettingsModal();

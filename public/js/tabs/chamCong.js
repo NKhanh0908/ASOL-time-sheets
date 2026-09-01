@@ -6,7 +6,12 @@ import { showToast, setBtnLoading, renderPagination, showConfirmDialog } from ".
 
 export function empName(id) {
   const emp = state.employees.find((e) => e.id === id);
-  if (!emp) return t("deletedEmp");
+  if (!emp) {
+    if (!state.isAdmin && state.currentUser && state.currentUser.id === id) {
+      return state.currentUser.code ? `[${state.currentUser.code}] ${state.currentUser.name}` : state.currentUser.name;
+    }
+    return t("deletedEmp");
+  }
   return emp.code ? `[${emp.code}] ${emp.name}` : emp.name;
 }
 
@@ -175,7 +180,7 @@ export function onEmployeeOrDateChange() {
   const btnSubmit = document.getElementById("btnSubmitEntry");
   const btnReset = document.getElementById("btnResetForm");
 
-  const empId = empSelect?.value;
+  const empId = !state.isAdmin && state.currentUser ? state.currentUser.id : empSelect?.value;
   const date = dateInput?.value;
 
   if (!empId || !date) {
@@ -258,12 +263,21 @@ export async function renderDayEntries(onDataChanged) {
   if (!date) return;
   if (weekdayLabel) weekdayLabel.textContent = weekdayLabelFor(date);
 
+  if (!state.currentUser && !state.token) {
+    list.innerHTML = `<div class="empty-state">${t("emptyDay")}</div>`;
+    if (paginationContainer) paginationContainer.innerHTML = "";
+    return;
+  }
+
   const mk = monthKeyOf(date);
   list.innerHTML = `<div class="empty-state"><span class="loading-pulse"><span class="loading-spinner"></span> ${t("loading")}</span></div>`;
 
   try {
     const monthEntries = await ensureMonthLoaded(mk);
-    const dayEntries = monthEntries.filter((e) => e.date === date);
+    let dayEntries = monthEntries.filter((e) => e.date === date);
+    if (!state.isAdmin && state.currentUser) {
+      dayEntries = dayEntries.filter((e) => e.employeeId === state.currentUser.id);
+    }
     if (dayEntries.length === 0) {
       list.innerHTML = `<div class="empty-state">${t("emptyDay")}</div>`;
       if (paginationContainer) paginationContainer.innerHTML = "";

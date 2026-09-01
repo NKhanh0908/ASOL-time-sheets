@@ -17,6 +17,14 @@ export function setAuthState(token, user) {
   state.token = token;
   state.currentUser = user;
   state.isAdmin = Boolean(user && user.role === "admin");
+  state.entriesCache = {};
+  state.filterData = {
+    items: [],
+    page: 1,
+    isLoaded: false,
+  };
+  state.timesheetPage = 1;
+
   if (token) {
     localStorage.setItem("asol_auth_token", token);
     if (state.isAdmin) {
