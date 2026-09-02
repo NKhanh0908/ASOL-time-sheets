@@ -9,6 +9,7 @@ export function initSettingsModal() {
   const btnCancel = document.getElementById("btnCancelSettingsModal");
   const form = document.getElementById("formSettings");
   const inputUrl = document.getElementById("inputWebhookUrl");
+  const inputSecret = document.getElementById("inputSyncSecret");
   const toggleSync = document.getElementById("toggleEnableSync");
   const envNote = document.getElementById("envFallbackNote");
   const btnTest = document.getElementById("btnTestWebhookConnection");
@@ -23,6 +24,7 @@ export function initSettingsModal() {
     try {
       const settings = await fetchSettings();
       if (inputUrl) inputUrl.value = settings.googleSheetWebhookUrl || "";
+      if (inputSecret) inputSecret.value = settings.googleSheetSyncSecret || "";
       if (toggleSync) toggleSync.checked = settings.googleSheetSyncEnabled !== false;
       if (envNote) {
         envNote.style.display = (!settings.googleSheetWebhookUrl && settings.hasEnvFallback) ? "block" : "none";
@@ -44,13 +46,14 @@ export function initSettingsModal() {
   // Test connection button
   btnTest?.addEventListener("click", async () => {
     const url = inputUrl?.value.trim();
+    const secret = inputSecret?.value.trim();
     if (testStatus) {
       testStatus.textContent = t("testingConnection");
       testStatus.style.color = "#666";
     }
     setBtnLoading(btnTest, true, t("testingConnection"));
     try {
-      const res = await testSyncConnection(url);
+      const res = await testSyncConnection(url, secret);
       if (testStatus) {
         testStatus.textContent = "✓ " + (res.message || t("syncMonthSuccess"));
         testStatus.style.color = "#2b8a3e";
@@ -71,11 +74,12 @@ export function initSettingsModal() {
   form?.addEventListener("submit", async (e) => {
     e.preventDefault();
     const googleSheetWebhookUrl = inputUrl?.value.trim() || "";
+    const googleSheetSyncSecret = inputSecret?.value.trim() || "";
     const googleSheetSyncEnabled = toggleSync?.checked ?? true;
 
     setBtnLoading(btnSubmit, true, t("savingSettings"));
     try {
-      await updateSettings({ googleSheetWebhookUrl, googleSheetSyncEnabled });
+      await updateSettings({ googleSheetWebhookUrl, googleSheetSyncSecret, googleSheetSyncEnabled });
       showToast(t("settingsSaved"), "success");
       closeModal();
     } catch (err) {

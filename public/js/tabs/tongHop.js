@@ -77,10 +77,13 @@ export function initTongHopTab() {
   }
   monthInput?.addEventListener("change", renderSummary);
 
+  let isSyncing = false;
   btnSync?.addEventListener("click", async () => {
+    if (isSyncing) return;
     const mk = monthInput?.value || monthKeyOf(todayStr());
     if (!mk) return;
 
+    isSyncing = true;
     setBtnLoading(btnSync, true, t("syncingMonth"));
     try {
       const res = await syncMonthToGoogleSheets(mk);
@@ -89,6 +92,10 @@ export function initTongHopTab() {
       showToast(err.message, "error");
     } finally {
       setBtnLoading(btnSync, false);
+      // Brief button cooldown
+      setTimeout(() => {
+        isSyncing = false;
+      }, 3000);
     }
   });
 }

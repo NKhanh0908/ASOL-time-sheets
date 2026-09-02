@@ -375,6 +375,7 @@ if (require.main === module) {
     await testAuthEndpoints();
     await testEmployeeManagement();
     await testScopedAccess();
+    process.exit(0);
   })().catch((err) => {
     console.error(err);
     process.exit(1);

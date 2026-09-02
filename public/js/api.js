@@ -125,10 +125,10 @@ export async function updateSettings(settings) {
   });
 }
 
-export async function testSyncConnection(url) {
+export async function testSyncConnection(url, secret) {
   return api("/api/sync/test", {
     method: "POST",
-    body: JSON.stringify({ url }),
+    body: JSON.stringify({ url, secret }),
   });
 }
 

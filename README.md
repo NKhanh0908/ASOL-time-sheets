@@ -77,18 +77,24 @@ docker build -t timesheet-app .
 docker run -d -p 3000:3000 -v $(pwd)/data:/app/data --name timesheet timesheet-app
 ```
 
-### 4. Tích Hợp Đồng Bộ Google Spreadsheet (Google Sheet Sync)
+### 4. Tích Hợp Đồng Bộ Google Spreadsheet An Toàn (Google Sheet Sync v2)
 
-1. Mở hoặc tạo một Google Spreadsheet mới.
+Hệ thống hỗ trợ kiến trúc đồng bộ nâng cao: **Tự động phân vùng Tab theo tháng (`ChamCong_YYYY_MM`)**, **Bảo vệ khóa đa luồng `LockService`**, **Ép định dạng Text chống nhảy ngày**, và **Xác thực bảo mật Shared Secret**.
+
+1. Mở hoặc tạo một Google Spreadsheet mới trên Google Drive.
 2. Vào menu **Tiện ích mở rộng (Extensions)** $\rightarrow$ **Apps Script**.
-3. Copy toàn bộ code trong file [`scripts/google_apps_script.js`](scripts/google_apps_script.js) dán vào trình soạn thảo Apps Script.
-4. Bấm **Triển khai (Deploy)** $\rightarrow$ **Tùy chọn triển khai mới (New deployment)**:
+3. Copy toàn bộ code trong file [`scripts/google_apps_script.js`](scripts/google_apps_script.js) dán đè vào trình soạn thảo Apps Script.
+4. *(Tùy chọn bảo mật cao)*: Vào **Cài đặt dự án (Project Settings)** trong Apps Script $\rightarrow$ Thêm **Script Properties**: `SYNC_SECRET` = mã bí mật của bạn (mặc định nếu không đặt là `asol_timesheet_secret_2026`).
+5. Bấm **Triển khai (Deploy)** $\rightarrow$ **Tùy chọn triển khai mới (New deployment)**:
    - Loại: **Web app**
    - Thực thi với tư cách: **Tôi (Me)**
    - Ai có quyền truy cập: **Bất kỳ ai (Anyone)**
-5. Copy URL Web app vừa tạo.
-6. Đăng nhập Admin trong Timesheet App $\rightarrow$ Bấm nút **⚙️ Cài đặt** $\rightarrow$ Dán URL và bấm **"Kiểm tra kết nối"** $\rightarrow$ Bấm **"Lưu cài đặt"** (hoặc cấu hình biến `GOOGLE_SHEET_WEBHOOK_URL` trong file `.env`).
-7. Ứng dụng sẽ tự động đồng bộ realtime khi có lượt chấm công, hoặc bấm nút **"📤 Đồng bộ Google Sheet"** trong tab Tổng hợp để sync trọn gói theo tháng.
+6. Copy URL Web app vừa tạo (có đuôi `/exec`).
+7. Đăng nhập Admin trong Timesheet App $\rightarrow$ Bấm nút **⚙️ Cài đặt** $\rightarrow$ Dán URL và Secret Key $\rightarrow$ Bấm **"Kiểm tra kết nối"** $\rightarrow$ Bấm **"Lưu cài đặt"** (hoặc cấu hình `GOOGLE_SHEET_WEBHOOK_URL` & `GOOGLE_SHEET_SYNC_SECRET` trong file `.env`).
+8. **3 Luồng đồng bộ thông minh:**
+   - **⚡ Real-time Sync:** Tự động upsert bản ghi vào đúng tab tháng `ChamCong_YYYY_MM` ngay khi TTS Check-in/Check-out.
+   - **⏰ Cron Job Định kỳ:** Chạy tự động lúc **10:00 sáng** và **20:00 tối** hàng ngày (Múi giờ `Asia/Ho_Chi_Minh`), sử dụng cơ chế **High-Watermark Delta Sync (`updated_at`)** chỉ gửi các bản ghi mới/chỉnh sửa.
+   - **📤 Đồng bộ Thủ công:** Bấm nút **"📤 Đồng bộ Google Sheet"** trong tab Tổng hợp để đối soát và đồng bộ toàn vẹn tháng được chọn.
 
 ---
 

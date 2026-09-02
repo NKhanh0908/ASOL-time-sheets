@@ -78,3 +78,4 @@ assert.strictEqual(p3.pageItems.length, 5);
 assert.strictEqual(p3.pageItems[4].id, "25");
 
 console.log("All calculation and pagination tests passed successfully!");
+process.exit(0);
