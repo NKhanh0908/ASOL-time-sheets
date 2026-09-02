@@ -1,6 +1,7 @@
 import { state } from "../state.js";
 import { api, createEmployee, resetEmployeePassword } from "../api.js";
 import { t } from "../i18n.js";
+import { updateEmpCount } from "./chamCong.js";
 import { showToast, setBtnLoading, showConfirmDialog, showPromptDialog, showInfoDialog } from "../utils/ui.js";
 
 export function renderEmployeeList(onEmployeeChanged) {
@@ -65,6 +66,7 @@ async function handleResetPassword(emp) {
 export async function loadEmployees(onEmployeeChanged) {
   try {
     state.employees = await api("/api/employees");
+    updateEmpCount();
     renderEmployeeList(onEmployeeChanged);
     if (typeof onEmployeeChanged === "function") {
       onEmployeeChanged();

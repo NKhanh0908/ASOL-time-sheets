@@ -56,6 +56,7 @@ async function onAuthStateChanged(user) {
 
   if (user) {
     await loadEmployees();
+    updateEmpCount();
     renderEmployeeSelect();
     renderFilterEmployeeSelect();
     await renderDayEntries(onTimesheetDataChanged);
@@ -66,6 +67,7 @@ async function onAuthStateChanged(user) {
     }
   } else {
     state.employees = [];
+    updateEmpCount();
     renderEmployeeSelect();
     renderFilterEmployeeSelect();
     const entryList = document.getElementById("entryList");
