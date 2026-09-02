@@ -125,6 +125,11 @@ export const dict = {
     btnClose: "Đóng",
     btnConfirmDelete: "Xoá",
     infoNewPassGenerated: "Mật khẩu mới đã được cập nhật thành công:",
+    quickTagsLabel: "Gợi ý nhanh:",
+    tagTask: "Làm task dự án",
+    tagBug: "Fix bugs / Testing",
+    tagResearch: "Nghiên cứu",
+    shortcutHint: "Mẹo: Nhấn Ctrl+Enter để gửi nhanh",
   },
   en: {
     eyebrow: "ALPACA SOLUTIONS",
@@ -252,6 +257,11 @@ export const dict = {
     btnClose: "Close",
     btnConfirmDelete: "Delete",
     infoNewPassGenerated: "New password has been generated for the intern:",
+    quickTagsLabel: "Quick suggestions:",
+    tagTask: "Project Tasks",
+    tagBug: "Fix bugs / Testing",
+    tagResearch: "Research",
+    shortcutHint: "Tip: Press Ctrl+Enter to submit",
   },
 };
 
@@ -285,6 +295,15 @@ export function setLanguage(lang, callbacks = {}) {
   document.querySelectorAll("[data-i18n-ph]").forEach((el) => {
     const k = el.getAttribute("data-i18n-ph");
     if (k && t(k)) el.placeholder = t(k);
+  });
+
+  // Update titles & aria-labels
+  document.querySelectorAll("[data-i18n-title]").forEach((el) => {
+    const k = el.getAttribute("data-i18n-title");
+    if (k && t(k)) {
+      el.title = t(k);
+      el.setAttribute("aria-label", t(k));
+    }
   });
 
   // Trigger optional callbacks to re-render dynamic views

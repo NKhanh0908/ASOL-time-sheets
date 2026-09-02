@@ -1,0 +1,58 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64" fill="none">
+  <defs>
+    <!-- Background Gradient -->
+    <linearGradient id="bgGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#2A3B49" />
+      <stop offset="100%" stop-color="#1A252E" />
+    </linearGradient>
+
+    <!-- Accent Stamp Gradient -->
+    <linearGradient id="stampGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#D45B3A" />
+      <stop offset="100%" stop-color="#AF4A2E" />
+    </linearGradient>
+
+    <!-- Success / Onsite Gradient -->
+    <linearGradient id="successGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#4E825D" />
+      <stop offset="100%" stop-color="#3F6B4C" />
+    </linearGradient>
+
+    <!-- Soft Inner Glow / Shadow -->
+    <filter id="softShadow" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="2" stdDeviation="2" flood-color="#000000" flood-opacity="0.25" />
+    </filter>
+  </defs>
+
+  <!-- App Icon Base Squircle -->
+  <rect x="2" y="2" width="60" height="60" rx="14" fill="url(#bgGrad)" stroke="#CFC6AC" stroke-width="1.5" filter="url(#softShadow)" />
+
+  <!-- Subtle Calendar/Timesheet grid accent in background -->
+  <rect x="12" y="12" width="40" height="40" rx="8" fill="#F4F1E6" fill-opacity="0.06" stroke="#CFC6AC" stroke-opacity="0.2" stroke-width="1" />
+  <line x1="12" y1="23" x2="52" y2="23" stroke="#CFC6AC" stroke-opacity="0.25" stroke-width="1" stroke-dasharray="2 2" />
+
+  <!-- Clock Outer Ring -->
+  <circle cx="32" cy="33" r="16" fill="#F4F1E6" stroke="#DFDAC7" stroke-width="1.5" filter="url(#softShadow)" />
+
+  <!-- Clock Hour Ticks -->
+  <circle cx="32" cy="20" r="1" fill="#22303C" />
+  <circle cx="45" cy="33" r="1" fill="#22303C" />
+  <circle cx="32" cy="46" r="1" fill="#22303C" />
+  <circle cx="19" cy="33" r="1" fill="#22303C" />
+
+  <!-- Clock Hands (Displaying active productivity ~ 9:15 / check-in time) -->
+  <!-- Hour hand -->
+  <line x1="32" y1="33" x2="26" y2="28" stroke="#22303C" stroke-width="2.5" stroke-linecap="round" />
+  <!-- Minute hand (Accent Stamp color) -->
+  <line x1="32" y1="33" x2="41" y2="33" stroke="url(#stampGrad)" stroke-width="2" stroke-linecap="round" />
+  <!-- Clock Center Pin -->
+  <circle cx="32" cy="33" r="2.2" fill="url(#stampGrad)" stroke="#F4F1E6" stroke-width="1" />
+
+  <!-- Punch-Card / Check-in Badge Pin (Top Right corner) -->
+  <circle cx="47" cy="17" r="7" fill="url(#successGrad)" stroke="#F4F1E6" stroke-width="1.5" />
+  <!-- Checkmark inside badge -->
+  <path d="M44 17L46 19L50 15" stroke="#FFFFFF" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" />
+
+  <!-- Small lightning / active indicator bottom-left -->
+  <path d="M16 46L19 41H17L20 37" stroke="url(#stampGrad)" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round" />
+</svg>

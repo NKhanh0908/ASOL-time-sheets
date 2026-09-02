@@ -4,21 +4,22 @@
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <title>Bảng làm việc Intern</title>
-<link rel="icon" type="image/png" href="assets/Logo_Full.png" />
+<link rel="icon" type="image/svg+xml" href="assets/svg/app-logo.svg" />
+<link rel="alternate icon" type="image/png" href="assets/Logo_Full.png" />
 <link rel="stylesheet" href="styles.css" />
 </head>
 <body>
   <div class="wrap">
     <header class="topbar">
       <div class="topbar-left">
-        <img src="assets/Logo_Full.png" alt="Logo" class="app-logo" />
+        <img src="assets/Logo_Full.png" alt="ALPACA SOLUTIONS" class="app-logo" />
         <div class="brand-info">
           <div class="eyebrow" data-i18n="eyebrow">ALPACA SOLUTIONS</div>
           <h1 data-i18n="appTitle">Bảng làm việc Intern</h1>
         </div>
       </div>
       <div class="topbar-right">
-        <div class="lang-switch">
+        <div class="lang-switch" style="display:none;">
           <button type="button" id="langVi" class="lang-btn active">VI</button>
           <span class="lang-divider">|</span>
           <button type="button" id="langEn" class="lang-btn">EN</button>
@@ -27,9 +28,15 @@
         <!-- User Controls on Header -->
         <div id="userControls" class="user-controls" style="display:none;">
           <span id="userBadge" class="badge-user"></span>
-          <button type="button" id="btnOpenSettingsModal" class="btn-sub btn-sm admin-only" data-i18n="settingsModalTitle" title="Cài đặt">Cài đặt</button>
-          <button type="button" id="btnOpenChangePassModal" class="btn-sub btn-sm" data-i18n="btnChangePass">Đổi MK</button>
-          <button type="button" id="btnLogoutUser" class="btn-sub btn-sm" data-i18n="btnLogout">Đăng xuất</button>
+          <button type="button" id="btnOpenSettingsModal" class="btn-sub btn-sm btn-icon-only admin-only" data-i18n-title="settingsModalTitle" title="Cài đặt & Tích hợp" aria-label="Cài đặt & Tích hợp">
+            <img src="assets/svg/setting.svg" class="icon-svg" alt="" />
+          </button>
+          <button type="button" id="btnOpenChangePassModal" class="btn-sub btn-sm btn-icon-only" data-i18n-title="btnChangePass" title="Đổi MK" aria-label="Đổi MK">
+            <img src="assets/svg/key.svg" class="icon-svg" alt="" />
+          </button>
+          <button type="button" id="btnLogoutUser" class="btn-sub btn-sm btn-icon-only" data-i18n-title="btnLogout" title="Đăng xuất" aria-label="Đăng xuất">
+            <img src="assets/svg/logout.svg" class="icon-svg" alt="" />
+          </button>
         </div>
 
         <div class="emp-count admin-only" id="empCount">0 nhân viên</div>
@@ -38,11 +45,23 @@
 
     <div id="errorBox" class="error-box" style="display:none;"></div>
 
-    <nav class="tabs">
-      <button class="tab-btn active" data-tab="cham-cong" data-i18n="tabChamCong">Chấm công</button>
-      <button class="tab-btn" data-tab="loc-cham-cong" data-i18n="tabLocChamCong">Lọc chấm công</button>
-      <button class="tab-btn admin-only" data-tab="nhan-vien" data-i18n="tabNhanVien">Nhân viên</button>
-      <button class="tab-btn" data-tab="tong-hop" data-i18n="tabTongHop">Tổng hợp</button>
+    <nav class="tabs" id="mainNavTabs">
+      <button class="tab-btn active" data-tab="cham-cong" data-i18n-title="tabChamCong" title="Chấm công">
+        <img src="assets/svg/time.svg" class="icon-svg icon-nav" alt="" />
+        <span class="tab-label" data-i18n="tabChamCong">Chấm công</span>
+      </button>
+      <button class="tab-btn" data-tab="loc-cham-cong" data-i18n-title="tabLocChamCong" title="Lọc chấm công">
+        <img src="assets/svg/filter.svg" class="icon-svg icon-nav" alt="" />
+        <span class="tab-label" data-i18n="tabLocChamCong">Lọc chấm công</span>
+      </button>
+      <button class="tab-btn admin-only" data-tab="nhan-vien" data-i18n-title="tabNhanVien" title="Thực tập sinh">
+        <img src="assets/svg/employee.svg" class="icon-svg icon-nav" alt="" />
+        <span class="tab-label" data-i18n="tabNhanVien">Nhân viên</span>
+      </button>
+      <button class="tab-btn" data-tab="tong-hop" data-i18n-title="tabTongHop" title="Tổng hợp">
+        <img src="assets/svg/chart.svg" class="icon-svg icon-nav" alt="" />
+        <span class="tab-label" data-i18n="tabTongHop">Tổng hợp</span>
+      </button>
     </nav>
 
     <main class="panel">
@@ -56,7 +75,7 @@
         <form id="entryForm" class="entry-form">
           <input type="hidden" id="entryIdInput" value="" />
           <div class="form-row main-fields">
-            <select id="empSelect" required>
+            <select id="empSelect" class="admin-only" required>
               <option value="" data-i18n="selectEmployee">Nhân viên</option>
             </select>
             <select id="modeSelect">
@@ -84,15 +103,28 @@
             </div>
           </div>
 
+          <!-- Quick Tags Bar -->
+          <div class="quick-tags-container" id="quickTagsContainer">
+            <span class="quick-tags-label" data-i18n="quickTagsLabel">Gợi ý nhanh:</span>
+            <div class="quick-tags-list" id="quickTagsList">
+              <button type="button" class="tag-chip" data-fill="Làm task dự án: " data-tag-key="tagTask" data-i18n="tagTask">Làm task dự án</button>
+              <button type="button" class="tag-chip" data-fill="Fix bugs/ Testing cho dự án: " data-tag-key="tagBug" data-i18n="tagBug">Fix bugs / Testing</button>
+              <button type="button" class="tag-chip" data-fill="Nghiên cứu về: " data-tag-key="tagResearch" data-i18n="tagResearch">Nghiên cứu</button>
+            </div>
+          </div>
+
           <div class="form-row note-row">
-            <input
-              type="text"
-              id="noteInput"
-              class="full-width note-input"
-              placeholder="Công việc hôm nay làm: ..."
-              required
-              data-i18n-ph="placeholderTask"
-            />
+            <div class="note-input-wrap">
+              <input
+                type="text"
+                id="noteInput"
+                class="full-width note-input"
+                placeholder="Công việc hôm nay làm: ..."
+                required
+                data-i18n-ph="placeholderTask"
+              />
+              <span class="shortcut-hint muted hide-mobile" data-i18n="shortcutHint">Mẹo: Nhấn Ctrl+Enter để gửi nhanh</span>
+            </div>
             <div class="btn-actions">
               <button type="button" id="btnResetForm" class="btn-sub" style="display:none;"><img src="assets/svg/reset.svg" class="icon-svg" alt="" /><span data-i18n="btnCancel">Huỷ</span></button>
               <button type="submit" id="btnSubmitEntry" class="btn-primary" data-i18n="btnCheckin">⚡ Điểm danh Vào</button>
@@ -108,21 +140,21 @@
       <section id="tab-loc-cham-cong" class="tab-content">
         <form id="filterForm" class="filter-form">
           <div class="filter-grid">
-            <div class="form-field">
+            <div class="filter-field admin-only">
               <label for="filterEmpSelect" data-i18n="filterLabelEmp">Nhân viên:</label>
               <select id="filterEmpSelect">
                 <option value="" data-i18n="filterAllEmployees">-- Tất cả nhân viên --</option>
               </select>
             </div>
-            <div class="form-field">
+            <div class="filter-field">
               <label for="filterStartDate" data-i18n="filterLabelFromDate">Từ ngày:</label>
               <input type="date" id="filterStartDate" />
             </div>
-            <div class="form-field">
+            <div class="filter-field">
               <label for="filterEndDate" data-i18n="filterLabelToDate">Đến ngày:</label>
               <input type="date" id="filterEndDate" />
             </div>
-            <div class="form-field">
+            <div class="filter-field">
               <label for="filterModeSelect" data-i18n="filterLabelMode">Hình thức:</label>
               <select id="filterModeSelect">
                 <option value="" data-i18n="filterAllModes">-- Tất cả hình thức --</option>
@@ -258,19 +290,17 @@
   <div id="loginGate" class="login-gate-overlay" style="display:none;">
     <div class="login-gate-card">
       <div class="login-gate-header">
-        <img src="assets/Logo_Full.png" alt="Logo" class="login-logo" />
-        <div class="eyebrow" style="margin-bottom: 4px;">ALPACA SOLUTIONS</div>
+        <img src="assets/Logo_Full.png" alt="ALPACA SOLUTIONS" class="login-logo" />
+        <div class="eyebrow" style="margin-top: 8px; margin-bottom: 4px;">ALPACA SOLUTIONS</div>
         <h2 data-i18n="loginGateTitle">Đăng nhập Hệ thống Chấm công</h2>
       </div>
 
       <div class="login-gate-tabs">
-        <button type="button" class="gate-tab-btn active" id="btnGateTabEmployee">
+        <button type="button" class="gate-tab-btn active" id="btnGateTabEmployee" data-i18n-title="tabLoginEmployee" title="Thực tập sinh" aria-label="Thực tập sinh">
           <img src="assets/svg/employee.svg" class="icon-svg icon-tab" alt="" />
-          <span data-i18n="tabLoginEmployee">Nhân viên</span>
         </button>
-        <button type="button" class="gate-tab-btn" id="btnGateTabAdmin">
+        <button type="button" class="gate-tab-btn" id="btnGateTabAdmin" data-i18n-title="tabLoginAdmin" title="Quản trị viên" aria-label="Quản trị viên">
           <img src="assets/svg/admin.svg" class="icon-svg icon-tab" alt="" />
-          <span data-i18n="tabLoginAdmin">Quản trị viên</span>
         </button>
       </div>
 

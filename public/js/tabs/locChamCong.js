@@ -12,7 +12,7 @@ export function renderFilterEmployeeSelect() {
   if (!state.isAdmin && state.currentUser) {
     filterEmpSelect.innerHTML = `<option value="${state.currentUser.id}">[${state.currentUser.code}] ${state.currentUser.name}</option>`;
     filterEmpSelect.value = state.currentUser.id;
-    filterEmpSelect.disabled = true;
+    filterEmpSelect.disabled = false;
     return;
   }
 

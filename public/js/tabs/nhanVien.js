@@ -20,8 +20,8 @@ export function renderEmployeeList(onEmployeeChanged) {
         <span class="name">${e.name}</span>
       </div>
       <div class="emp-row-actions">
-        <button class="btn-sub btn-sm btn-reset-pass" data-id="${e.id}" title="${t("btnResetPassword")}">
-          <span class="hide-mobile">${t("btnResetPassword")}</span>
+        <button class="btn-sub btn-sm btn-icon-only btn-reset-pass" data-id="${e.id}" title="${t("btnResetPassword")}" aria-label="${t("btnResetPassword")}">
+          <img src="assets/svg/key.svg" class="icon-svg" alt="" />
         </button>
         <button class="del-btn" data-id="${e.id}" aria-label="Xoá" title="Xoá">
           <img src="assets/svg/trash.svg" class="icon-svg icon-trash" alt="Xoá" />

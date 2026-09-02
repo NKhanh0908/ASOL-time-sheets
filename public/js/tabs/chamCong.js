@@ -35,11 +35,13 @@ export function renderEmployeeSelect() {
   if (!state.isAdmin && state.currentUser) {
     empSelect.innerHTML = `<option value="${state.currentUser.id}">[${state.currentUser.code}] ${state.currentUser.name}</option>`;
     empSelect.value = state.currentUser.id;
-    empSelect.disabled = true;
+    empSelect.required = false;
+    empSelect.disabled = false;
     return;
   }
 
   empSelect.disabled = false;
+  empSelect.required = true;
   const keep = empSelect.value;
   empSelect.innerHTML = `<option value="">${t("selectEmployee")}</option>`;
   state.employees.forEach((e) => {
@@ -68,6 +70,7 @@ export function applyTimeFieldLockState(stateType) {
   const noteInput = document.getElementById("noteInput");
   const modeSelect = document.getElementById("modeSelect");
   const btnSubmit = document.getElementById("btnSubmitEntry");
+  const tagChips = document.querySelectorAll(".tag-chip");
 
   if (stateType === "completed_locked") {
     if (inTimeInput) inTimeInput.disabled = true;
@@ -77,6 +80,7 @@ export function applyTimeFieldLockState(stateType) {
     if (noteInput) noteInput.disabled = true;
     if (modeSelect) modeSelect.disabled = true;
     if (btnSubmit) btnSubmit.disabled = true;
+    tagChips.forEach((chip) => { chip.disabled = true; });
     inTimeWrap?.classList.add("disabled");
     outTimeWrap?.classList.add("disabled");
   } else if (stateType === "off") {
@@ -87,6 +91,7 @@ export function applyTimeFieldLockState(stateType) {
     if (noteInput) noteInput.disabled = false;
     if (modeSelect) modeSelect.disabled = false;
     if (btnSubmit) btnSubmit.disabled = false;
+    tagChips.forEach((chip) => { chip.disabled = false; });
     inTimeWrap?.classList.add("disabled");
     outTimeWrap?.classList.add("disabled");
   } else if (stateType === "waiting_checkout") {
@@ -97,6 +102,7 @@ export function applyTimeFieldLockState(stateType) {
     if (noteInput) noteInput.disabled = false;
     if (modeSelect) modeSelect.disabled = false;
     if (btnSubmit) btnSubmit.disabled = false;
+    tagChips.forEach((chip) => { chip.disabled = false; });
     inTimeWrap?.classList.add("disabled");
     outTimeWrap?.classList.remove("disabled");
   } else if (stateType === "no_checkin") {
@@ -107,6 +113,7 @@ export function applyTimeFieldLockState(stateType) {
     if (noteInput) noteInput.disabled = false;
     if (modeSelect) modeSelect.disabled = false;
     if (btnSubmit) btnSubmit.disabled = false;
+    tagChips.forEach((chip) => { chip.disabled = false; });
     inTimeWrap?.classList.remove("disabled");
     outTimeWrap?.classList.add("disabled");
   } else {
@@ -118,6 +125,7 @@ export function applyTimeFieldLockState(stateType) {
     if (noteInput) noteInput.disabled = false;
     if (modeSelect) modeSelect.disabled = false;
     if (btnSubmit) btnSubmit.disabled = false;
+    tagChips.forEach((chip) => { chip.disabled = false; });
     inTimeWrap?.classList.remove("disabled");
     outTimeWrap?.classList.remove("disabled");
   }
@@ -166,6 +174,7 @@ export function resetFormState() {
     btnSubmit.disabled = false;
   }
   if (btnReset) btnReset.style.display = "none";
+  document.querySelectorAll(".tag-chip").forEach((c) => c.classList.remove("active"));
   applyTimeFieldLockState("no_checkin");
 }
 
@@ -196,6 +205,13 @@ export function onEmployeeOrDateChange() {
     if (entryIdInput) entryIdInput.value = existingEntry.id;
     if (modeSelect) modeSelect.value = existingEntry.mode || "Onsite";
     if (noteInput) noteInput.value = existingEntry.note || "";
+
+    const noteVal = (existingEntry.note || "").trim();
+    document.querySelectorAll(".tag-chip").forEach((chip) => {
+      const tagKey = chip.dataset.tagKey;
+      const tagText = tagKey ? t(tagKey) : chip.textContent;
+      chip.classList.toggle("active", tagText === noteVal);
+    });
 
     const isAlreadyCompleted = (existingEntry.in && existingEntry.out) || existingEntry.mode === "Nghỉ" || existingEntry.mode === "Off";
 
@@ -437,6 +453,44 @@ export function initChamCongTab(onDataChanged) {
     state.timesheetPage = 1;
     renderDayEntries(onDataChanged);
     onEmployeeOrDateChange();
+  });
+
+  // Quick Tags handling
+  const tagChips = document.querySelectorAll(".tag-chip");
+  const noteInput = document.getElementById("noteInput");
+
+  tagChips.forEach((chip) => {
+    chip.addEventListener("click", () => {
+      if (chip.disabled) return;
+      const fillText = chip.dataset.fill || (chip.dataset.tagKey ? t(chip.dataset.tagKey) : chip.textContent);
+      if (noteInput && !noteInput.disabled) {
+        noteInput.value = fillText;
+        tagChips.forEach((c) => c.classList.remove("active"));
+        chip.classList.add("active");
+        noteInput.focus();
+        const len = noteInput.value.length;
+        noteInput.setSelectionRange(len, len);
+      }
+    });
+  });
+
+  noteInput?.addEventListener("input", () => {
+    const val = noteInput.value;
+    tagChips.forEach((chip) => {
+      const fillText = chip.dataset.fill || (chip.dataset.tagKey ? t(chip.dataset.tagKey) : chip.textContent);
+      chip.classList.toggle("active", Boolean(fillText && val.startsWith(fillText)));
+    });
+  });
+
+  // Shortcut: Ctrl+Enter or Cmd+Enter to submit quickly
+  entryForm?.addEventListener("keydown", (e) => {
+    if ((e.ctrlKey || e.metaKey) && e.key === "Enter") {
+      e.preventDefault();
+      const btnSubmit = document.getElementById("btnSubmitEntry");
+      if (btnSubmit && !btnSubmit.disabled) {
+        entryForm.requestSubmit();
+      }
+    }
   });
 
   btnResetForm?.addEventListener("click", () => {
